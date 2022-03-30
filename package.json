@@ -1,0 +1,22 @@
+{
+  "name": "allez-event-mgmt",
+  "version": "1.0.0",
+  "description": "Allez Event Management Application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/san70sh/allez-event-mgmt.git"
+  },
+  "author": "Vinnakota Bapiraju, Suresh Ashwin, Tata Prasanth, Kalidindi Sai Anirudh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/san70sh/allez-event-mgmt/issues"
+  },
+  "homepage": "https://github.com/san70sh/allez-event-mgmt#readme",
+  "dependencies": {
+    "react": "^18.0.0"
+  }
+}
