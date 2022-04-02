@@ -2,24 +2,20 @@ import * as connections from "../config/mongoConnection";
 import {ObjectId} from "mongodb";
 
 interface User {
-    id: ObjectId,
-    name: String,
+    id?: ObjectId,
+    name: string,
     address: {
-        city: String,
-        state: String,
-        zip: String
+        city: string,
+        state: string,
+        zip: string
     },
-    gender: String,
+    gender: string,
     dateOfBirth: Date,
-    email: String,
-    password: String,
-    hostEventArray: [],
-    attendEventArray: []
+    email: string,
+    password: string,
+    hostEventArray: string[],
+    attendEventArray: string[]
 }
 
-async function createUserCol() {
-    const db = await connections.connectDB();
-    const collection = db.collection<User>("users");
-}
 
-createUserCol();
+export {User};

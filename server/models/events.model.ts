@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb"
 import * as connections from "../config/mongoConnection";
 
 interface Event {
-    eventId : ObjectId,
+    eventId ?: ObjectId,
     eventImgs : [],
     name : String,
     category : String,
@@ -25,10 +25,4 @@ interface Event {
 
 }
 
-
-async function createEventCol() {
-    const db = await connections.connectDB();
-    const collection = db.collection<Event>("events");
-}
-
-createEventCol();
+export {Event};

@@ -1,12 +1,19 @@
-import mongoDB from "mongodb";
+import * as mongoDB from "mongodb";
 import 'dotenv/config';
+const {MONGO_URL, DB_NAME} = process.env;
 
-const {MONGO_URL} = process.env;
+let _connection: mongoDB.MongoClient, _db: mongoDB.Db;
 
 export async function connectDB() {
-    const client: mongoDB.MongoClient = new mongoDB.MongoClient(MONGO_URL!);
-    await client.connect();
+    if(!_connection) {
+        // const clientDB = new mongoDB.MongoClient(MONGO_URL!);
+        _connection = await mongoDB.MongoClient.connect(MONGO_URL!);
+        _db = _connection.db(DB_NAME);
+    }
+    console.log(_db);
+    return _db;   
+}
 
-    const db: mongoDB.Db = client.db("Allez_Event_DB");
-    return db;
+export function closeConnection() : void {
+_connection.close();
 }
