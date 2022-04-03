@@ -10,9 +10,9 @@ export async function connectDB() {
         _connection = await mongoDB.MongoClient.connect(MONGO_URL!);
         _db = _connection.db(DB_NAME);
     }
-    console.log(_db);
     return _db;   
 }
+
 
 export function closeConnection() : void {
 _connection.close();
