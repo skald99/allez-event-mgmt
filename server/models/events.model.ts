@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb"
 import * as connections from "../config/mongoConnection";
 
 interface Event {
-    eventId ?: ObjectId,
+    _id ?: ObjectId,
     eventImgs : [],
     name : String,
     category : String,
