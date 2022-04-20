@@ -1,6 +1,5 @@
-import { ObjectId } from "mongodb";
-import { type } from "os";
 import { Event } from "../models/events.model";
+import { User } from "../models/user.model";
 import Stripe from "stripe";
 import "dotenv/config";
 
@@ -38,6 +37,29 @@ interface EventPrice {
     type: Stripe.Price.Type
 }
 
+interface Address {
+    city: string,
+    state: string,
+    country: string,
+    postal_code: string
+}
+
+interface EventCustomer {
+    id ?: string,
+    name: string,
+    email: string,
+    phone: string,
+    metadata: {
+        gender: string,
+        dateOfBirth: Date
+    }
+    address: Address,
+    shipping: {
+        address: Stripe.Emptyable<Stripe.AddressParam>
+        name: string,
+        phone: string
+    }
+}
 
 async function addEvent(event: Event) {
     let newEvent: EventProduct = {
@@ -106,14 +128,109 @@ async function addEventRegFee(eventID: string, price: number) {
             return newFee;
         }
     }
+}
 
+async function updateEventRegFee(eventID: string, price: number) {
+    if(!eventID) {
+        console.log("No event");
+        return null;
+    }
 
+    let event = await stripe.products.retrieve(eventID);
+    if(event) {
+        let eventFee = await stripe.prices.list({
+            product: event.id
+        })
+        console.log(eventFee);
+    }
+}
 
+async function addCustomer(customer: User) {
+    let newCustomer: Stripe.CustomerCreateParams = {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone.toString(),
+        metadata: {
+            gender: customer.gender,
+        },
+        
+        shipping: {
+            name: customer.name,
+            address: customer.address,
+            phone: customer.phone.toString()
+        }
+    } 
+
+    let insertedCustomer = await stripe.customers.create(newCustomer)
+    return insertedCustomer;
+}
+
+async function searchCustomer(phone: string, name: string) {
+    if(!phone || name || phone.trim().length == 0 || name.trim().length == 0) {
+        console.log("Incomplete Details");
+    } else {
+        let {data} = await stripe.customers.search({query: `name: ${name} AND phone: ${phone}`})
+        let idList;
+        if(data.length > 0) {
+            data.forEach(e => {
+                idList.push(e.id);
+            })
+            return idList;
+        }
+    }
+}
+async function removeCustomer(customerID: string) {
+    if(!customerID) {
+        console.log("Invalid Details");
+    } else {
+        let customer = await stripe.customers.retrieve(customerID);
+        if(customer && !Object.keys(customer).includes('deleted')) {
+            let delCustomer = await stripe.customers.del(customerID);
+            return delCustomer.deleted;
+        }
+    }
+}
+
+async function createSession() {
 
 }
+
+async function expireSession() {
+
+}
+
+async function createPaymentIntent(amount: number, customerId: string, eventId: string, email: string) {
+
+    if(!amount || !customerId || !eventId) {
+        console.log('Invalid Details');
+    } else {
+        let customer: Stripe.Response<Stripe.Customer | Stripe.DeletedCustomer> = await stripe.customers.retrieve(customerId);
+        if(customer && Object.keys(customer).includes('email')) {
+            email = (customer as Stripe.Customer).email!;
+        }
+        let newPaymentIntent: Stripe.PaymentIntentCreateParams = {
+            amount: amount*100,
+            customer: customerId,
+            currency: 'usd',
+            confirm: true,
+            receipt_email: email,
+            metadata: {
+                eventId: eventId
+            }
+        }
+
+        let createdIntent = await stripe.paymentIntents.create(newPaymentIntent)
+        return createdIntent;
+    }
+}
+
 export default {
     addEvent,
     getEvent,
     removeEvent,
-    addEventRegFee
+    addEventRegFee,
+    updateEventRegFee,
+    addCustomer,
+    removeCustomer,
+    createPaymentIntent
 }
