@@ -12,6 +12,7 @@ interface Event {
     bookedSeats : number,
     minAge: number,
     hostId : ObjectId,
+    active: Boolean,
     // stripe_product_id: string,
     cohostArr : [],
     attendeesArr : [],

@@ -7,8 +7,11 @@ interface User {
     address: {
         city: string,
         state: string,
-        zip: string
+        postal_code: string,
+        country: string,
+
     },
+    phone: number,
     gender: string,
     dateOfBirth: Date,
     email: string,
