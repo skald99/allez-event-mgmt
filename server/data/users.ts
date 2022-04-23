@@ -104,6 +104,8 @@ async function createUser(person : User) {
  */
 async function modifyUser(person : User) {
                             
+    let parseId = new ObjectId(person._id);
+
     let modifiedUser : User = {
         "name": person.name,
         "password": await bcrypt.hash(person.password, bcryptRounds),
@@ -124,7 +126,7 @@ async function modifyUser(person : User) {
     
     await users(); // instantiating the mongoCollection
 
-    let result = await collections.users?.updateOne( {email: person.email}, {$set: modifiedUser});
+    let result = await collections.users?.updateOne( {_id: parseId}, {$set: modifiedUser});
     console.log(result);
     if(result?.modifiedCount === 0) throw 'could not modify the users details'; // if unable to update throw an error
     let createUserData = await collections.users?.findOne({email: person.email}); // finding the newly inserted object with the new userId
