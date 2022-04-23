@@ -2,7 +2,7 @@ import * as connections from "../config/mongoConnection";
 import {ObjectId} from "mongodb";
 
 interface User {
-    _id?: ObjectId,
+    _id?: ObjectId | string,
     name: string,
     address: {
         city: string,
