@@ -2,16 +2,16 @@
   "name": "allez-event-mgmt",
   "version": "1.0.0",
   "description": "Allez Event Management Application",
-  "main": "index.js",
+  "main": "app.ts",
   "scripts": {
-    "start": "node index.ts",
+    "start": "ts-node app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/san70sh/allez-event-mgmt.git"
   },
-  "author": "Vinnakota Bapiraju, Suresh Ashwin, Tata Prasanth, Kalidindi Sai Anirudh",
+  "author": "Vinnakota Bapiraju, Suresh Ashwin, Tata Prasanth, Kalidindi Sai Anirudh Varma",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/san70sh/allez-event-mgmt/issues"
@@ -25,9 +25,13 @@
     "express": "^4.17.3",
     "express-session": "^1.17.2",
     "mongodb": "^4.4.1",
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "stripe": "^8.217.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/express": "^4.17.13",
+    "@types/express-session": "^1.17.4",
     "@types/mongodb": "^4.0.7",
     "@types/node": "^17.0.23",
     "nodemon": "^2.0.15",

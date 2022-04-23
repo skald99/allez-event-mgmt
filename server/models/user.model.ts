@@ -2,13 +2,16 @@ import * as connections from "../config/mongoConnection";
 import {ObjectId} from "mongodb";
 
 interface User {
-    id?: ObjectId,
+    _id?: ObjectId | string,
     name: string,
     address: {
         city: string,
         state: string,
-        zip: string
+        postal_code: string,
+        country: string,
+
     },
+    phone: number,
     gender: string,
     dateOfBirth: Date,
     email: string,
@@ -19,3 +22,5 @@ interface User {
 
 
 export {User};
+
+

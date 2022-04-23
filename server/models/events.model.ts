@@ -2,24 +2,26 @@ import { ObjectId } from "mongodb"
 import * as connections from "../config/mongoConnection";
 
 interface Event {
-    eventId ?: ObjectId,
+    _id ?: ObjectId,
     eventImgs : [],
-    name : String,
-    category : String,
-    price: Number,
-    description : String,
-    totalSeats: Number,
-    bookedSeats : Number,
-    minAge: Number,
+    name : string,
+    category : string,
+    price: number,
+    description : string,
+    totalSeats: number,
+    bookedSeats : number,
+    minAge: number,
     hostId : ObjectId,
+    active: Boolean,
+    // stripe_product_id: string,
     cohostArr : [],
     attendeesArr : [],
     venue: {
-        address: String,
-        city: String,
-        state: String,
-        zip: String,
-        geoLocation: {lat: Number, long: Number}
+        address: string,
+        city: string,
+        state: string,
+        zip: string,
+        geoLocation: {lat: number, long: number}
     },
     eventTimeStamp: Date
 
