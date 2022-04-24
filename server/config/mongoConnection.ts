@@ -16,4 +16,5 @@ export async function connectDB() {
 
 export function closeConnection() : void {
 _connection.close();
+console.log("Hello")
 }
