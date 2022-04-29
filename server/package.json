@@ -4,7 +4,7 @@
   "description": "Allez Event Management Application",
   "main": "app.ts",
   "scripts": {
-    "start": "ts-node app.ts",
+    "start": "ts-node-dev --respawn --transpile-only app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,7 +26,8 @@
     "express-session": "^1.17.2",
     "mongodb": "^4.4.1",
     "react": "^18.0.0",
-    "stripe": "^8.217.0"
+    "stripe": "^8.217.0",
+    "ts-node-dev": "^1.1.8"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

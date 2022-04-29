@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb";
-import { emitWarning } from "process";
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
 import { User } from "../models/user.model";
@@ -55,7 +54,7 @@ async function checkUser(email: string, password: string) {
 
     if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
     console.log(requestedUser);
-    return {"userLoggedIn" : true};
+    return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
 }
 
 
@@ -169,11 +168,29 @@ async function getRegisteredEvents(id: string) {
     return requestedUser.attendEventArray;
 }
 
+/**
+ * this method is used to delete the user and user's details
+ * @param id is of string type. Here id represents user's id
+ * @returns if the user is deleted or will throw an error
+ */
+async function deleteUser(id: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let requestDeleteUser = await collections.users?.deleteOne({_id: parseId}); // deletes the requestedUser using id
+
+    if(requestDeleteUser?.deletedCount === 0) throw 'could not delete the requested user'; // if the data is not deleted will throw an error
+
+    return {userDeleted: true};
+}
+
 export default {
     getUser,
     checkUser,
     createUser, 
     modifyUser,
     getHostedEvents,
-    getRegisteredEvents
+    getRegisteredEvents,
+    deleteUser
 };
