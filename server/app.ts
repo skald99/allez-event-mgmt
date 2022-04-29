@@ -1,4 +1,5 @@
 //import { User } from "./models/user.model"; 
+
 import express from 'express';
 import session from "express-session";
 const app = express();
@@ -14,6 +15,41 @@ app.use(session({
     saveUninitialized: true
 }))
 
+app.post('/users/login', (req, res, next) => {
+    if(req.session.userId) res.status(401).json({ "success": false, "result": 'user is already logged in.'});
+    else next();
+})
+
+app.get('/users', (req, res, next) => {
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
+
+app.put('/users', (req, res, next) => {
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
+
+app.get('/users/getHostedEvents', (req, res, next) => {
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
+
+app.get('/users/getRegisteredEvents', (req, res, next) => {
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
+
+app.delete('/users', (req, res, next) => {
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
+
+app.get('/users/logout', (req, res, next) => {
+    console.log("inside logout middleware", req.session.userId);
+    if(!req.session.userId) res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    else next();
+})
 
 // //import data from "./data";
 // //const usersData = data.usersData;
@@ -81,6 +117,16 @@ app.use(session({
 // }
 
 // main();
+
+// app.use(async(req, res, next) => {
+//     let timeStamp = new Date().toUTCString();
+//     let reqMethod = req.method;
+//     let reqUserId = req.session.userId;
+//     let reqRoute = req.originalUrl;
+//     if(req.session.userId) console.log(timeStamp + ': ' + reqUserId+ ': ' + reqMethod + reqRoute + 'Authenticated user');
+//     else console.log(timeStamp + ': '+ reqUserId+ ': ' + reqMethod + reqRoute + 'Non-Authenticated user');
+//     next();
+// });
 
 configRoutes(app);
 
