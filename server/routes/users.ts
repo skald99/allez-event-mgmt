@@ -2,16 +2,29 @@ import express from 'express';
 import { User } from '../models/user.model';
 const router = express.Router();
 import data from "../data";
+import { fstat } from 'fs';
 const usersData = data.usersData;
+//import { Session }  from "../models/session.model";
+
+router.get("/logout", async(req, res) => {
+    try{
+        // logout route is not functioning and need to be changed in the future
+        req.session.userId = '';
+        console.log("session should be destroyed", req.session.userId);
+        res.status(200).json({"success": true, "result": "user has successfully logged out"});
+    }catch(e){
+        res.status(400).json({"success": false, "result": e});
+    }
+})
 
 router.get("/", async(req, res) => {
     try{
-        let id: string = req.body.id;
+        let id: string = req.session.userId;
         let getUserDetails = await usersData.getUser(id);
         console.log(getUserDetails);
-        res.status(200).json(getUserDetails);
+        res.status(200).json({ "success": true, "result": getUserDetails });
     }catch(e){
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e});
     }
 })
 
@@ -21,9 +34,10 @@ router.post("/login", async(req, res) => {
         let password: string = req.body.password;
         let userLogin = await usersData.checkUser(email, password);
         console.log(userLogin);
-        res.status(200).json(userLogin);
+        req.session.userId = userLogin.userId;
+        res.status(200).json({ "success": true, "result": userLogin });
     }catch(e){  
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e });
     }
 })
 
@@ -48,16 +62,16 @@ router.post("/", async(req, res) => {
 
         let newlyCreatedUser = await usersData.createUser(newUser);
         console.log(newlyCreatedUser);
-        res.status(200).json(newlyCreatedUser);
+        res.status(200).json({ "success": true, "result": newlyCreatedUser });
     }catch(e){
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e });
     }
 })
 
 router.put("/", async(req, res) => {
     try{
         let newUser: User = {
-            "_id": req.body.id,
+            "_id": req.session.id,
             "name": req.body.name,
             "password": req.body.password,
             "address": {
@@ -76,29 +90,39 @@ router.put("/", async(req, res) => {
 
         let updatedUser = await usersData.modifyUser(newUser);
         console.log(updatedUser);
-        res.status(200).json(updatedUser);
+        res.status(200).json({ "success": true, "result": updatedUser });
     }catch(e){
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e });
     }
 })
 
 router.get("/getHostedEvents", async(req, res) => {
     try{
-        let hostedEvents = await usersData.getHostedEvents(req.body.id);
+        let hostedEvents = await usersData.getHostedEvents(req.session.userId);
         console.log(hostedEvents);
-        res.status(200).json(hostedEvents);
+        res.status(200).json({ "success": true, "result": hostedEvents });
     }catch(e){
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e });
     }
 })
 
 router.get("/getRegisteredEvents", async(req, res) => {
     try{
-        let registeredEvents = await usersData.getRegisteredEvents(req.body.id);
+        let registeredEvents = await usersData.getRegisteredEvents(req.session.userId);
         console.log(registeredEvents);
-        res.status(200).json(registeredEvents);
+        res.status(200).json({ "success": true, "result": registeredEvents });
     }catch(e){
-        res.status(400).json(e);
+        res.status(400).json({ "success": false, "result": e });
+    }
+})
+
+router.delete("/", async(req, res) => {
+    try{
+        let deleteRequestedUser = await usersData.deleteUser(req.session.userId);
+        console.log(deleteRequestedUser);
+        res.status(200).json({ "success": true, "result": deleteRequestedUser });
+    }catch(e){
+        res.status(400).json({ "success": false, "result": e });
     }
 })
 
