@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb"
 // import * as connections from "../config/mongoConnection";
 
 interface Event {
+    _id ?: ObjectId | string,
     eventId ?: ObjectId | string,
     eventImgs : [],
     name : string,
@@ -18,7 +19,7 @@ interface Event {
         address: string,
         city: string,
         state: string,
-        zip: string,
+        zip: number,
         geoLocation: {lat: number, long: number}
     },
     eventTimeStamp: Date
