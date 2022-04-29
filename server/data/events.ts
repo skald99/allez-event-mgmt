@@ -2,6 +2,7 @@ import { ObjectID } from "bson";
 
 import { ObjectId } from "mongodb";
 import { emitWarning } from "process";
+import { fileURLToPath } from "url";
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
 import { Event } from "../models/events.model";
@@ -21,11 +22,11 @@ async function createEvent(eventDetails: Event){
     if (typeof(eventDetails.venue.address)!='string') throw 'Error: Address Of The Venue Is Not a String.'
     if (typeof(eventDetails.venue.city)!='string') throw 'Error: City Of The Venue Is Not a String.'
     if (typeof(eventDetails.venue.state)!='string') throw 'Error: State Of The Venue Is Not a String.'
-    if (typeof(eventDetails.venue.zip)!='string') throw 'Error: ZIP Of The Venue Is Not a String.'
+    // if (typeof(eventDetails.venue.zip)!='string') throw 'Error: ZIP Of The Venue Is Not a String.'
 
     if (typeof(eventDetails.venue.geoLocation.lat)!='number') throw 'Error: Latitude Of The GeoLocation Of The Event Is Not a Number.'
     if (typeof(eventDetails.venue.geoLocation.long)!='number') throw 'Error: Longitude Of The GeoLocation Of The Event Is Not a Number.'
-    if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
+    // if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
     // let hostIdgen = 
     let newEvent : Event = {
         "eventImgs" : [],
@@ -49,7 +50,8 @@ async function createEvent(eventDetails: Event){
         "eventTimeStamp": eventDetails.eventTimeStamp
     }
     await events()
-    await collections.events?.insertOne(newEvent)
+    let created = await collections.events?.insertOne(newEvent)
+    return created
 }
 
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event){
@@ -66,26 +68,26 @@ async function deleteEvent(eventId: string | ObjectId){
     console.log(deletedEvent)
     return deletedEvent
 }
-async function getEventById(eventId: string | ObjectId){
-    eventId = new ObjectId(eventId)
-    await events();
-    let requestedEvent = await collections.events?.findOne({_id: eventId})
-    if(requestedEvent===null) throw [400, 'Event Not Found']
-    console.log(requestedEvent)
-    return requestedEvent;
-}
-async function getEventsByCategory(eventCategory: string){
-    await events();
+// async function getEventById(eventId: string | ObjectId){
+//     eventId = new ObjectId(eventId)
+//     await events();
+//     let requestedEvent = await collections.events?.findOne({_id: eventId})
+    
+//     console.log(requestedEvent)
+//     return requestedEvent;
+// }
+// async function getEventsByCategory(eventCategory: string){
+//     await events();
 
-    let requestedEvent = await collections.events?.find({category: eventCategory}).toArray();
-    if(requestedEvent===null) throw 'Error: Event Not Found'
-    console.log(requestedEvent)
-    if(requestedEvent?.length===0){
-        throw [400, "No Events In That Category"]
-    }
-    return requestedEvent;
+//     let requestedEvent = await collections.events?.find({category: eventCategory}).toArray();
+//     if(requestedEvent===null) throw 'Error: Event Not Found'
+//     console.log(requestedEvent)
+//     if(requestedEvent?.length===0){
+//         throw [400, "No Events In That Category"]
+//     }
+//     return requestedEvent;
 
-}
+// }
 
 async function getAllEvents(){
     await events();
@@ -98,37 +100,37 @@ async function getAllEvents(){
     return requestedEvent;
 
 }
-async function getEventsByHost(hostId: string | ObjectId){
-    hostId = new ObjectId(hostId)
-    await events();
-    let requestedEvent = await collections.events?.find({hostId: hostId}).toArray();
-    if(requestedEvent?.length===0){
-        throw [400, "No Events By that Host Found"]
-    }
-    console.log(requestedEvent)
-    return requestedEvent;
+// async function getEventsByHost(hostId: string | ObjectId){
+//     hostId = new ObjectId(hostId)
+//     await events();
+//     let requestedEvent = await collections.events?.find({hostId: hostId}).toArray();
+//     if(requestedEvent?.length===0){
+//         throw [400, "No Events By that Host Found"]
+//     }
+//     console.log(requestedEvent)
+//     return requestedEvent;
 
-}
-async function getEventsByCity(cityFind: string){
-    await events();
-    let requestedEvent = await collections.events?.find({'venue.city': cityFind}).toArray()
-    console.log(requestedEvent)
-    if(requestedEvent?.length===0){
-        throw [400, "No Events In That City"]
-    }
-    return requestedEvent;
+// }
+// async function getEventsByCity(cityFind: string){
+//     await events();
+//     let requestedEvent = await collections.events?.find({'venue.city': cityFind}).toArray()
+//     console.log(requestedEvent)
+//     if(requestedEvent?.length===0){
+//         throw [400, "No Events In That City"]
+//     }
+//     return requestedEvent;
 
-}
-async function getEventsByState(stateFind: string){
-    await events();
-    let requestedEvent = await collections.events?.find({'venue.state': stateFind}).toArray()
-    console.log(requestedEvent)
-    if(requestedEvent?.length===0){
-        throw [400, "No Events In That State"]
-    }
-    return requestedEvent;
+// }
+// async function getEventsByState(stateFind: string){
+//     await events();
+//     let requestedEvent = await collections.events?.find({'venue.state': stateFind}).toArray()
+//     console.log(requestedEvent)
+//     if(requestedEvent?.length===0){
+//         throw [400, "No Events In That State"]
+//     }
+//     return requestedEvent;
 
-}
+// }
 
 async function addImage(eventId: string){
 
@@ -152,8 +154,9 @@ async function addCohost(eventId: string | ObjectId, userId: string){
     console.log(cohostUpdated)
     if(cohostUpdated?.modifiedCount===0){
         //Already registered
-        throw [400, "You Are Already A Cohost For The Event"]
+        throw [400, "Cannot Add Co Host"]
     }
+    return cohostUpdated
 }
 async function addAttendee(eventId: string | ObjectId, userId: string){
 
@@ -168,7 +171,9 @@ async function addAttendee(eventId: string | ObjectId, userId: string){
     }
     else{
         await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: 1}})
+        return "Attendee added successfully"
     }
+    // return attendeeUpdated;
     
 }
 async function unRegister(eventId: string | ObjectId, userId: string){
@@ -181,21 +186,127 @@ async function unRegister(eventId: string | ObjectId, userId: string){
     if(removeAttendee?.modifiedCount===0) throw [400, "User Not Present"]
     else{
         await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: -1}})
+        return "Attendee unregistered successfully"
     }
+   
     
 }
-export {createEvent,  //checked
+async function removeCohost(eventId: string | ObjectId, userId: string){
+
+    eventId = new ObjectId(eventId)
+    await events();
+    let remCohost = await collections.events?.updateOne({_id: eventId},{$pull: {cohostArr:userId}})
+    if(remCohost?.modifiedCount===0) throw [400, "Cohost/Event Not Present"]
+    return "Cohost removed successfully"
+}
+async function getByFilter(filters: {city ?: string, state ?: string, category ?: string}){
+    await events();
+    // City, state, category
+    console.log("Insdei getbyfilter function")
+    console.log(filters)
+    if(filters.city && filters.category && filters.state){
+        let requestedEvent = await collections.events?.find({"venue.city": filters.city, "venue.state": filters.state, "category": filters.category}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+    }
+    else if(filters.city && filters.state){
+        console.log("Only city, state")
+        let requestedEvent = await collections.events?.find({"venue.city": filters.city, "venue.state": filters.state}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+    } 
+    else if(filters.city && filters.category){
+        let requestedEvent = await collections.events?.find({"venue.city": filters.city, "category": filters.category}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+
+    } 
+    else if(filters.category && filters.state){
+        let requestedEvent = await collections.events?.find({"venue.state": filters.state, "category": filters.category}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+
+    } 
+    else if(filters.city){
+        console.log("Only city filter")
+        let requestedEvent = await collections.events?.find({"venue.city": filters.city}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+    } 
+    else if(filters.state){
+        let requestedEvent = await collections.events?.find({"venue.state": filters.state}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+
+    } 
+    else if(filters.category){
+        let requestedEvent = await collections.events?.find({"category": filters.category}).toArray()
+        if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
+        console.log(requestedEvent)
+        return requestedEvent;
+
+    } 
+    else{
+        throw [400, 'No Events Based On This Filter']
+    }
+
+}
+async function getbyId(ids: {eventId ?: string | ObjectId, hostId ?: string | ObjectId }){
+    await events();
+    console.log(ids)
+    if(ids.eventId && ids.hostId){
+        console.log("Both")
+        let neweventId = new ObjectId(ids.eventId)
+        let newhostId = new ObjectId(ids.hostId)
+        let requestedEvent = await collections.events?.findOne({_id: neweventId, hostId: newhostId});
+        if(requestedEvent===null) throw [400, 'Event Not Found With that ID And HostId']
+        console.log(requestedEvent)
+        return requestedEvent;
+
+    }
+    else if(ids.eventId){
+        console.log("Only eventid")
+        console.log(ids.eventId)
+        let neweventId = new ObjectId(ids.eventId)
+        console.log(neweventId)
+        let requestedEvent = await collections.events?.findOne({_id: neweventId});
+        console.log(requestedEvent)
+        if(requestedEvent===null) throw [400, 'Event Not Found']
+        console.log(requestedEvent)
+        return requestedEvent;
+    }
+    else if(ids.hostId){
+        console.log("Only hostId")
+    let newhostId = new ObjectId(ids.hostId)
+    let requestedEvent = await collections.events?.find({hostId: newhostId}).toArray();
+    if(requestedEvent?.length===0){
+        throw [400, "No Events By that Host Found"]
+    }
+    console.log(requestedEvent)
+    return requestedEvent;
+    }
+    else{
+        
+    }throw [400, 'No Events Based On This Filter']
+
+}
+export default {
+    createEvent,  //checked
     modifyEvent, 
     deleteEvent, //Checked
-    getEventById, //Checked
-    getEventsByCategory, //checked
     getAllEvents, //checked
-    getEventsByHost, //Checked
-    getEventsByCity, //checked
-    getEventsByState,//checked
     addAttendee,//checked
     unRegister, //Checked
     getFreeEvents, //Checked
     addImage,
-    addCohost
+    addCohost,
+    getByFilter,
+    getbyId,
+    removeCohost
 }
