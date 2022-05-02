@@ -19,7 +19,7 @@ interface Event {
         address: string,
         city: string,
         state: string,
-        zip: number,
+        zip: string,
         geoLocation: {lat: number, long: number}
     },
     eventTimeStamp: Date

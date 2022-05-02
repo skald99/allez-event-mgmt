@@ -25,6 +25,7 @@ router.post('/create', async(req,res)=>{
     //Sample url:
     // http://localhost:4000/events/create
     let obj = req.body;
+    obj.hostId = req.session.userId;
     // console.log(obj)
     try{
     let addEvent = await eventsData.createEvent(obj);
@@ -94,10 +95,10 @@ router.get('/free', async (req, res)=>{
             }
     });
 
-router.post('/event/:eventid/register/:userid', async function(req, res){
+router.post('/event/:eventid/register', async function(req, res){
 
     let event = req.params.eventid
-    let newUserid = req.params.userid
+    let newUserid = req.session.userId;
     try{
         let addattendees = await eventsData.addAttendee(event, newUserid);
         res.status(200).json({"success": true, "result": addattendees})
@@ -108,10 +109,10 @@ router.post('/event/:eventid/register/:userid', async function(req, res){
 
 });
 
-router.post('/event/:eventid/unregister/:userid', async function(req, res){
+router.post('/event/:eventid/unregister/', async function(req, res){
 
     let event = req.params.eventid
-    let newUserid = req.params.userid
+    let newUserid = req.session.userId;
     try{
         let unregister = await eventsData.unRegister(event, newUserid);
         res.status(200).json({"success": true, "result": unregister})
@@ -121,10 +122,10 @@ router.post('/event/:eventid/unregister/:userid', async function(req, res){
     }
 });
 
-router.post('/event/:eventid/addcohost/:userid', async function(req, res){
+router.post('/event/:eventid/addcohost', async function(req, res){
 
     let event = req.params.eventid
-    let newUserid = req.params.userid
+    let newUserid = req.session.userId;
     try{
         let addCoHosts = await eventsData.addCohost(event, newUserid);
         res.status(200).json({"success": true, "result": addCoHosts})
