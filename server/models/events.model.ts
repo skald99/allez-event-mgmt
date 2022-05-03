@@ -1,8 +1,9 @@
 import { ObjectId } from "mongodb"
-import * as connections from "../config/mongoConnection";
+// import * as connections from "../config/mongoConnection";
 
 interface Event {
-    _id ?: ObjectId,
+    _id ?: ObjectId | string,
+    eventId ?: ObjectId | string,
     eventImgs : [],
     name : string,
     category : string,
@@ -11,11 +12,9 @@ interface Event {
     totalSeats: number,
     bookedSeats : number,
     minAge: number,
-    hostId : ObjectId,
-    active: Boolean,
-    // stripe_product_id: string,
-    cohostArr : [],
-    attendeesArr : [],
+    hostId : ObjectId | string,
+    cohostArr ?: string[],
+    attendeesArr ?: string[],
     venue: {
         address: string,
         city: string,
