@@ -1,7 +1,7 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import EventDashboard from '../src/components/events'
+import EventDashboard from './components/EventDashboard'
 import { BrowserRouter as Router, Route, Link,Routes } from 'react-router-dom';
 
 function App() {
