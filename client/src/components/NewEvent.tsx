@@ -34,7 +34,7 @@ const NewEvent = () => {
     let map: google.maps.Map;
 
     const loader = new Loader({
-        apiKey: "AIzaSyC4QpjB1HOs-dYl8rLJT1sr2GbKOue8NjU",
+        apiKey: process.env.GOOGLE_MAPS_API!,
         version: "weekly",
         libraries: ["places"]
     })
