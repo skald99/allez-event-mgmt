@@ -4,8 +4,8 @@ import Stripe from "stripe";
 import "dotenv/config";
 
 let stripe_key : string;
-if(process.env.STRIPE_PUBLIC_KEY) {
-    stripe_key = process.env.STRIPE_PUBLIC_KEY
+if(process.env.STRIPE_PRIVATE_KEY) {
+    stripe_key = process.env.STRIPE_PRIVATE_KEY
 } else {
     throw new Error("Stripe Key is not set");
 }
@@ -18,7 +18,7 @@ interface EventProduct {
     id ?: string,
     name: string,
     description: string,
-    images: [],
+    images: string[],
     metadata: {
         category: string,
         totalSeats: number,
