@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/san70sh/allez-event-mgmt#readme",
   "dependencies": {
+    "@faker-js/faker": "^6.3.1",
     "@types/typescript": "^2.0.0",
     "axios": "^0.26.1",
     "bcrypt": "^5.0.1",
