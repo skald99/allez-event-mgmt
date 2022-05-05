@@ -6,7 +6,7 @@ interface Event {
     eventId ?: ObjectId | string,
     eventImgs : string[],
     name : string,
-    category : string,
+    category : string[],
     price: number,
     description : string,
     totalSeats: number,

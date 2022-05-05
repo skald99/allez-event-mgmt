@@ -13,7 +13,7 @@ type Venue = {
 
 function newEvent() {
     const name : string = faker.name.findName();
-    const category : string = faker.helpers.arrayElement(['Career','Night Life','Food and Entertainment','Sports','Other','Music','Charity','Exploration']);
+    const category : string[] = faker.helpers.arrayElements(['Career','Night Life','Food and Entertainment','Sports','Other','Music','Charity','Exploration']);
     const price: number = parseFloat(faker.commerce.price(undefined,undefined,2));
     const description : string = faker.commerce.productDescription();
     const totalSeats: number = faker.datatype.number({max: 200});
