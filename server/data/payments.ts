@@ -68,7 +68,7 @@ async function addEvent(event: Event) {
         "description": event.description,
         "images": event.eventImgs,
         "metadata": {
-            "category": event.category,
+            "category": event.category.toString(),
             "totalSeats": event.totalSeats,
             "hostId": event.hostId.toString(),
             "minAge": event.minAge

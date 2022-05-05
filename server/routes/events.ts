@@ -44,16 +44,16 @@ router.get('/', async(req, res)=>{
     //localhost:3000/events?category=
     //localhost:3000/events/
        
-    if(req.query.city || req.query.state || req.query.category){
-        try{
-        let getFilterEvents = await eventsData.getByFilter(req.query)
-        res.status(200).json({"success": false, "result": getFilterEvents});
-        }
-            catch(e: ?){
-                res.status(e[0]).json({"success": false, "result": e[1]})
-            }
-        }
-        else {
+    // if(req.query.city || req.query.state || req.query.category){
+    //     try{
+    //     let getFilterEvents = await eventsData.getByFilter(req.query)
+    //     res.status(200).json({"success": false, "result": getFilterEvents});
+    //     }
+    //         catch(e: ?){
+    //             res.status(e[0]).json({"success": false, "result": e[1]})
+    //         }
+    //     }
+    //     else {
             //Getallevents
             console.log("No filters applied")
             try{
@@ -63,7 +63,7 @@ router.get('/', async(req, res)=>{
             catch(e: ?){
                 res.status(e[0]).json({"success": false, "result": e[1]})
             }
-        }
+        // }
     
     });
     
