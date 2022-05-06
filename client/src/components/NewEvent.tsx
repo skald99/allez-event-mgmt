@@ -43,7 +43,6 @@ const NewEvent = () => {
         libraries: ["places"]
     })
 
-    console.log(watch("eventTimeStamp"))
     let predictionInput = document.getElementById("venue");
     
     // React.useEffect(() => {
