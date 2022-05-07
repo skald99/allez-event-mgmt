@@ -49,8 +49,13 @@ async function createEvent(eventDetails: Event){
         "eventTimeStamp": eventDetails.eventTimeStamp
     }
     await events()
-    let created = await collections.events?.insertOne(newEvent)
-    return created
+    let created = await collections.events?.insertOne(newEvent);
+    //if(created)
+
+    let insertedEvent = await collections.events?.findOne({_id: created?.insertedId});
+    if(insertedEvent) insertedEvent._id = insertedEvent._id.toString();
+    else throw "Event is not inserted properly";
+    return insertedEvent;
 }
 
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event){
@@ -61,13 +66,18 @@ async function modifyEvent(eventId: string | ObjectId, eventDetails: Event){
 async function deleteEvent(eventId: string | ObjectId){
     eventId = new ObjectID(eventId)
     await events()
+
+    let removingEvent = await collections.events?.findOne({_id: eventId});
+    if(removingEvent) removingEvent._id = removingEvent._id.toString();
+    else throw "There is no event with the requested id";
+
     let deletedEvent = await collections.events?.deleteOne({_id: eventId})
     if(deletedEvent?.deletedCount===0){
         throw [400, "Could Not Delete Event"]
     }
     // return requestedEvent;
     console.log(deletedEvent)
-    return deletedEvent
+    return removingEvent
 }
 // async function getEventById(eventId: string | ObjectId){
 //     eventId = new ObjectId(eventId)

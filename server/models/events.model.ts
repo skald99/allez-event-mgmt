@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb"
 
 interface Event {
     _id ?: ObjectId | string,
-    eventId ?: ObjectId | string,
+    //eventId ?: ObjectId | string,
     eventImgs : string[],
     name : string,
     category : string[],
