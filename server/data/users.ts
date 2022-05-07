@@ -232,7 +232,6 @@ async function deleteRegisteredEvent(id: string, eventId: string) {
 
     return {deletingRegisteredEvent: true};
 }
-
 export default {
     getUser,
     checkUser,
