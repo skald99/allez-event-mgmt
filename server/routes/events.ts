@@ -108,7 +108,7 @@ router.post('/event/:eventid/register', async function(req, res){
         res.status(200).json({"success": true, "result": addattendees})
     }
     catch(e: ?){
-        res.status(e[0]).json({"success": false, "result": e[1]})
+        res.status(400).json({"success": false, "result": e[1]})
     }
 
 });
@@ -135,11 +135,12 @@ router.post('/event/:eventid/addcohost/:userid', async function(req, res){
     try{
         let reqEvent = await eventsData.getbyId({eventId: eventId, hostId: userId});
 
-        if(reqEvent) {
+        if((userId != newUserid) && reqEvent) {
             let addCoHosts = await eventsData.addCohost(eventId, newUserid);
             let addEventInUserCollection = await usersData.addHostedEvent(newUserid, eventId);
             res.status(200).json({"success": true, "result": addCoHosts})
         }
+        throw "user is already participating in the event";
     }
     catch(e: ?){
         res.status(e[0]).json({"success": false, "result": e[1]})
