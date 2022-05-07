@@ -33,7 +33,7 @@ async function dropAll() {
   }
 }
 async function seedData(num: number) {
-  // creat users
+  // create users
     console.log("--------------------------------------------");
     console.log("Starting to Create Users...");
     const userEventLog: UserEvent[] = [];
@@ -53,10 +53,12 @@ async function seedData(num: number) {
             console.log("-------------------------------------");
             console.log("Adding events to users");
             let event = await eventFunctions.createEvent(finalEvent1);
+            let addEvent1InUserCollection = await userFunctions.addHostedEvent(hostId, event._id.toString());
             let event2 = await eventFunctions.createEvent(finalEvent2);
+            let addEvent2InUserCollection = await userFunctions.addHostedEvent(hostId, event2._id.toString());
             console.log("Check22");
-            console.log(typeof event?.insertedId.toString());
-            eventIds.push(event?.insertedId.toString()!, event2?.insertedId.toString()!);
+            console.log(typeof event?._id);
+            eventIds.push(event?._id.toString()!, event2?._id.toString()!);
             login.push({ email: tempUser.email, password: tempUser.password });
             console.log(`Inserting Users: ${i}/${num - 1}`);
         } catch (e) {
@@ -67,32 +69,32 @@ async function seedData(num: number) {
     console.log(userEventLog);
 
     //Please fix the cohost and attendee insertion for events and users. I am unable to do so. //Bapi 
-    for(let j = 0;j < eventIds.length; j++) {
-        let numOfInserts = Math.floor(Math.random() * userEventLog.length);
-        console.log("L72: "+numOfInserts);
-        let attendOrCoHost: number = Math.floor(Math.random());
-        console.log("attendOrCoHost: "+ attendOrCoHost);
-        for(let i = 0; i < numOfInserts; i++) {
-            if(!userEventLog[i].hostArr.includes(eventIds[j]) || !userEventLog[i].attendArr.includes(eventIds[j])) {
-                let userId = userEventLog[i].id;
-                console.log(userEventLog[i]);
-                if(attendOrCoHost == 1 && !userEventLog[i].hostArr.includes(eventIds[j])) {
-                    let attendee = await eventFunctions.addAttendee(eventIds[j],userId);
-                    userEventLog[i].attendArr.push(eventIds[j]);
-                    console.log(attendee);
-                } else if(!userEventLog[i].attendArr.includes(eventIds[j])) {
-                    let cohost = await eventFunctions.addCohost(eventIds[j], userId);
-                    console.log(cohost);
-                }
-            }
-        }
-    }
+    // for(let j = 0;j < eventIds.length; j++) {
+    //     let numOfInserts = Math.floor(Math.random() * userEventLog.length);
+    //     console.log("L72: "+numOfInserts);
+    //     let attendOrCoHost: number = Math.floor(Math.random());
+    //     console.log("attendOrCoHost: "+ attendOrCoHost);
+    //     for(let i = 0; i < numOfInserts; i++) {
+    //         if(!userEventLog[i].hostArr.includes(eventIds[j]) || !userEventLog[i].attendArr.includes(eventIds[j])) {
+    //             let userId = userEventLog[i].id;
+    //             console.log(userEventLog[i]);
+    //             if(!userEventLog[i].hostArr.includes(eventIds[j])) {
+    //                 let attendee = await eventFunctions.addAttendee(eventIds[j],userId);
+    //                 userEventLog[i].attendArr.push(eventIds[j]);
+    //                 console.log(attendee);
+    //             } else if(!userEventLog[i].attendArr.includes(eventIds[j]) && (userEventLog[i].id != userId)) {
+    //                 let cohost = await eventFunctions.addCohost(eventIds[j], userId);
+    //                 console.log(cohost);
+    //             }
+    //         }
+    //     }
+    // }
 
   
     console.log("All users have been created!");
     // output to json
     let userLogin = JSON.stringify(login);
-    await writeFile('./task/user.json', userLogin, "utf8", () => {})
+    writeFile('./task/user.json', userLogin, "utf8", () => {})
     return userEventLog;
 }
 
