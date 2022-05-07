@@ -28,7 +28,7 @@ async function createEvent(eventDetails: Event){
     // // if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
     // let hostIdgen = 
     let newEvent : Event = {
-        "eventImgs" : [],
+        "eventImgs" : eventDetails.eventImgs,
         "name" : eventDetails.name,
         "category" : eventDetails.category,
         "price": eventDetails.price,
