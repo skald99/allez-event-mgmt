@@ -63,7 +63,7 @@ interface EventCustomer {
 
 async function addEvent(event: Event) {
     let newEvent: EventProduct = {
-        "id": event.eventId?.toString(),
+        "id": event._id?.toString(),
         "name": event.name,
         "description": event.description,
         "images": event.eventImgs,

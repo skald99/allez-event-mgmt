@@ -185,6 +185,54 @@ async function deleteUser(id: string) {
     return {userDeleted: true};
 }
 
+async function addHostedEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let addingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {hostEventArray: eventId}}); // finds the requestedUser using id
+
+    if(addingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+
+    return {addedHostedEvent: true};
+}
+
+async function addRegisteredEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let addingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {attendEventArray: eventId}}); // finds the requestedUser using id
+
+    if(addingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+
+    return {addedRegisteredEvent: true};
+}
+
+async function deleteHostedEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let deletingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {hostEventArray: eventId}}); // finds the requestedUser using id
+
+    if(deletingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+
+    return {deletingHostedEvent: true};
+}
+
+async function deleteRegisteredEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let deletingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {attendEventArray: eventId}}); // finds the requestedUser using id
+
+    if(deletingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+
+    return {deletingRegisteredEvent: true};
+}
+
 export default {
     getUser,
     checkUser,
@@ -192,5 +240,9 @@ export default {
     modifyUser,
     getHostedEvents,
     getRegisteredEvents,
-    deleteUser
+    deleteUser,
+    addHostedEvent,
+    addRegisteredEvent,
+    deleteHostedEvent,
+    deleteRegisteredEvent
 };
