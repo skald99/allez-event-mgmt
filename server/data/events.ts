@@ -1,34 +1,15 @@
 import { ObjectID } from "bson";
 
 import { ObjectId } from "mongodb";
-import { fileURLToPath } from "url";
 import { collections, users, events } from "../config/mongoCollections";
-import * as mongoConnection from "../config/mongoConnection";
 import { Event } from "../models/events.model";
+import usersdata from "./users";
+
 
 async function createEvent(eventDetails: Event){
-
-    // if (typeof(eventDetails.name)!='string') throw 'Error: Name Of The Event Is Not a String.'
-    // if (typeof(eventDetails.category)!='string') throw 'Error: Category Of The Event Is Not a String.'
-    // if (typeof(eventDetails.description)!='string') throw 'Error: Description Of The Event Is Not a String.'
-    // if (typeof(eventDetails.totalSeats)!='number') throw 'Error: TotalSeats Of The Event Is Not a Number.'
-    // if (typeof(eventDetails.price)!='number') throw 'Error: Price Of The Event Is Not a Number.'
-    // if (typeof(eventDetails.bookedSeats)!='number') throw 'Error: Booked Seats Of The Event Is Not a Number.'
-    // if (typeof(eventDetails.minAge)!='number') throw 'Error: Minimum Age Of The Event Is Not a Number.'
-
-    // if (typeof(eventDetails.hostId)!='string') throw 'Error: Host ID Of The Event Is Not a String.'
-    // // if (typeof(ObjectId(event.hostId))!='string') throw 'Error: Host ID Of The Event Is Not a ObjectID.'
-    // if (typeof(eventDetails.venue.address)!='string') throw 'Error: Address Of The Venue Is Not a String.'
-    // if (typeof(eventDetails.venue.city)!='string') throw 'Error: City Of The Venue Is Not a String.'
-    // if (typeof(eventDetails.venue.state)!='string') throw 'Error: State Of The Venue Is Not a String.'
-    // // if (typeof(eventDetails.venue.zip)!='string') throw 'Error: ZIP Of The Venue Is Not a String.'
-
-    // if (typeof(eventDetails.venue.geoLocation.lat)!='number') throw 'Error: Latitude Of The GeoLocation Of The Event Is Not a Number.'
-    // if (typeof(eventDetails.venue.geoLocation.long)!='number') throw 'Error: Longitude Of The GeoLocation Of The Event Is Not a Number.'
-    // // if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
-    // let hostIdgen = 
+    
     let newEvent : Event = {
-        "eventImgs" : [],
+        "eventImgs" : eventDetails.eventImgs,
         "name" : eventDetails.name,
         "category" : eventDetails.category,
         "price": eventDetails.price,
@@ -50,8 +31,6 @@ async function createEvent(eventDetails: Event){
     }
     await events()
     let created = await collections.events?.insertOne(newEvent);
-    //if(created)
-
     let insertedEvent = await collections.events?.findOne({_id: created?.insertedId});
     if(insertedEvent) insertedEvent._id = insertedEvent._id.toString();
     else throw "Event is not inserted properly";
@@ -60,13 +39,39 @@ async function createEvent(eventDetails: Event){
 
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event){
 
+    eventId = new ObjectId(eventId)
+    let newEvent : Event = {
+        "eventImgs" : eventDetails.eventImgs,
+        "name" : eventDetails.name,
+        "category" : eventDetails.category,
+        "price": eventDetails.price,
+        "description" : eventDetails.description,
+        "totalSeats": eventDetails.totalSeats,
+        "bookedSeats" : eventDetails.bookedSeats,
+        "minAge": eventDetails.minAge,
+        "hostId" : eventDetails.hostId,
+        "cohostArr" : [],
+        "attendeesArr" : [],
+        "venue": {
+            "address": eventDetails.venue.address,
+            "city": eventDetails.venue.city,
+            "state": eventDetails.venue.state,
+            "zip": eventDetails.venue.zip,
+            "geoLocation": {lat: eventDetails.venue.geoLocation.lat, long: eventDetails.venue.geoLocation.long}
+        },
+        "eventTimeStamp": eventDetails.eventTimeStamp
+    }
+    await events()
+    let eventUpdated = await collections.events?.updateOne({_id: eventId},{$set: newEvent});
+    if(eventUpdated?.modifiedCount===0){
+        throw [400, "Cannot Update Event"]
+    }
+    return "Updated The Event Successfully"
 }
-
 
 async function deleteEvent(eventId: string | ObjectId){
     eventId = new ObjectID(eventId)
     await events()
-
     let removingEvent = await collections.events?.findOne({_id: eventId});
     if(removingEvent) removingEvent._id = removingEvent._id.toString();
     else throw "There is no event with the requested id";
@@ -75,8 +80,6 @@ async function deleteEvent(eventId: string | ObjectId){
     if(deletedEvent?.deletedCount===0){
         throw [400, "Could Not Delete Event"]
     }
-    // return requestedEvent;
-    console.log(deletedEvent)
     return removingEvent
 }
 // async function getEventById(eventId: string | ObjectId){
@@ -103,8 +106,6 @@ async function deleteEvent(eventId: string | ObjectId){
 async function getAllEvents(){
     await events();
     let requestedEvent = await collections.events?.find().toArray();
-    // if(requestedEvent===null) throw 'Error: No Events Found'
-    // console.log(requestedEvent)
     if(requestedEvent?.length===0){
         throw [400, "No Events Found"]
     }
@@ -164,16 +165,27 @@ async function addCohost(eventId: string | ObjectId, userId: string){
     let cohostUpdated = await collections.events?.updateOne({_id: eventId},{$addToSet: {cohostArr: userId}});
     console.log(cohostUpdated)
     if(cohostUpdated?.modifiedCount===0){
-        //Already registered
         throw [400, "Cannot Add Co Host"]
     }
     return cohostUpdated
 }
+
 async function addAttendee(eventId: string | ObjectId, userId: string){
 
     eventId = new ObjectId(eventId)
+    console.log(userId)
     await events();
-    //Check a condition where all seats are booked
+    let requestedEvent = await collections.events?.findOne({_id: eventId});
+    console.log(requestedEvent?._id.toString())
+    if(requestedEvent?.totalSeats===requestedEvent?.bookedSeats){
+        throw [400, 'Event Is Full Already']
+    }
+    if(userId===requestedEvent?.hostId){
+        throw [400, "You're the Host"]
+    }
+    if(requestedEvent?.cohostArr?.includes(userId)){
+        throw [400, "You're A Cohost"]
+    }
     let attendeeUpdated = await collections.events?.updateOne({_id: eventId},{$addToSet: {attendeesArr:userId}});
     console.log(attendeeUpdated)
     if(attendeeUpdated?.modifiedCount===0){
@@ -184,16 +196,13 @@ async function addAttendee(eventId: string | ObjectId, userId: string){
         await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: 1}})
         return "Attendee added successfully"
     }
-    // return attendeeUpdated;
-    
 }
+
 async function unRegister(eventId: string | ObjectId, userId: string){
 
     eventId = new ObjectId(eventId)
     await events();
-
     let removeAttendee = await collections.events?.updateOne({_id: eventId},{$pull: {attendeesArr:userId}})
-    console.log(removeAttendee)
     if(removeAttendee?.modifiedCount===0) throw [400, "User Not Present"]
     else{
         await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: -1}})
@@ -210,6 +219,7 @@ async function removeCohost(eventId: string | ObjectId, userId: string){
     if(remCohost?.modifiedCount===0) throw [400, "Cohost/Event Not Present"]
     return "Cohost removed successfully"
 }
+
 async function getByFilter(filters: {city ?: string, state ?: string, category ?: string}){
     await events();
     // City, state, category
@@ -218,27 +228,23 @@ async function getByFilter(filters: {city ?: string, state ?: string, category ?
     if(filters.city && filters.category && filters.state){
         let requestedEvent = await collections.events?.find({"venue.city": filters.city, "venue.state": filters.state, "category": filters.category}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
     }
     else if(filters.city && filters.state){
         console.log("Only city, state")
         let requestedEvent = await collections.events?.find({"venue.city": filters.city, "venue.state": filters.state}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
     } 
     else if(filters.city && filters.category){
         let requestedEvent = await collections.events?.find({"venue.city": filters.city, "category": filters.category}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
 
     } 
     else if(filters.category && filters.state){
         let requestedEvent = await collections.events?.find({"venue.state": filters.state, "category": filters.category}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
 
     } 
@@ -246,20 +252,17 @@ async function getByFilter(filters: {city ?: string, state ?: string, category ?
         console.log("Only city filter")
         let requestedEvent = await collections.events?.find({"venue.city": filters.city}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
     } 
     else if(filters.state){
         let requestedEvent = await collections.events?.find({"venue.state": filters.state}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
 
     } 
     else if(filters.category){
         let requestedEvent = await collections.events?.find({"category": filters.category}).toArray()
         if(requestedEvent == null) throw  [400, 'No Events Based On This Filter']
-        console.log(requestedEvent)
         return requestedEvent;
 
     } 
@@ -272,40 +275,51 @@ async function getbyId(ids: {eventId ?: string | ObjectId, hostId ?: string | Ob
     await events();
     console.log(ids)
     if(ids.eventId && ids.hostId){
-        console.log("Both")
         let neweventId = new ObjectId(ids.eventId)
         let newhostId = new ObjectId(ids.hostId)
         let requestedEvent = await collections.events?.findOne({_id: neweventId, hostId: newhostId});
         if(requestedEvent===null) throw [400, 'Event Not Found With that ID And HostId']
-        console.log(requestedEvent)
         return requestedEvent;
 
     }
     else if(ids.eventId){
-        console.log("Only eventid")
-        console.log(ids.eventId)
         let neweventId = new ObjectId(ids.eventId)
-        console.log(neweventId)
         let requestedEvent = await collections.events?.findOne({_id: neweventId});
-        console.log(requestedEvent)
         if(requestedEvent===null) throw [400, 'Event Not Found']
-        console.log(requestedEvent)
         return requestedEvent;
     }
     else if(ids.hostId){
-        console.log("Only hostId")
     let newhostId = new ObjectId(ids.hostId)
     let requestedEvent = await collections.events?.find({hostId: newhostId}).toArray();
     if(requestedEvent?.length===0){
         throw [400, "No Events By that Host Found"]
     }
-    console.log(requestedEvent)
     return requestedEvent;
     }
     else{
-        
     }throw [400, 'No Events Based On This Filter']
 
+}
+async function getList(eventId: string){
+    await events();
+    let neweventId = new ObjectId(eventId)
+    let requestedEvent = await collections.events?.findOne({_id: neweventId});
+    if(requestedEvent===null) throw [400, 'Event Not Found']
+    let arr = requestedEvent?.attendeesArr
+    if(requestedEvent?.attendeesArr)
+    {
+        let finalDetails = []
+    for(let i=0;i<requestedEvent?.attendeesArr?.length;i++)
+    {
+        let detailObj={"name": '', "email": '', "phone": 0}
+        let details = await usersdata.getUser(requestedEvent?.attendeesArr[i])
+        detailObj["name"] = details.name
+        detailObj["email"] = details.email
+        detailObj["phone"] = details.phone
+        finalDetails.push(detailObj)
+    }
+    return finalDetails
+    }
 }
 export default {
     createEvent,  //checked
@@ -319,5 +333,6 @@ export default {
     addCohost,
     getByFilter,
     getbyId,
-    removeCohost
+    removeCohost,
+    getList
 }

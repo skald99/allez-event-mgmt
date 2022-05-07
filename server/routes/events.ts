@@ -8,26 +8,11 @@ const eventsData = data.eventsData;
 const usersData = data.usersData;
 export default router;
 
-
-
-//create
-//delete
-//getall
-//getbyid
-//getbycatgory
-//getbyhost
-//getbycity
-//getbystate
-//addAttendee
-//unregister
-
-
 router.post('/create', async(req,res)=>{
     //Sample url:
     // http://localhost:4000/events/create
     let obj = req.body;
     obj.hostId = req.session.userId;
-    // console.log(obj)
     try{
     let addEvent = await eventsData.createEvent(obj);
     let addEventInUserCollection = await usersData.addHostedEvent(req.session.userId, addEvent._id.toString());
@@ -77,13 +62,18 @@ router.get('/event', async (req, res)=>{
     if(req.query.eventId || req.query.hostId){
         try{
             let getById = await eventsData.getbyId(req.query)
-            res.status(200).json({"success": false, "result": getById})
+            if(req.query.eventId){
+                let getAllList = await eventsData.getList(req.query.eventId.toString())
+                res.status(200).json({"success": true, "result": {event: getById, attendeeDetail: getAllList}})
+            }
+            else{
+                res.status(200).json({"success": true, "result": getById})
+            }
+            
         }
         catch(e: ?){
             res.status(e[0]).json({"success": false, "result": e[1]})
         }
-       
-
     }
 });
 router.get('/free', async (req, res)=>{
