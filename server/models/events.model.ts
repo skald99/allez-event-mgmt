@@ -4,9 +4,9 @@ import { ObjectId } from "mongodb"
 interface Event {
     _id ?: ObjectId | string,
     eventId ?: ObjectId | string,
-    eventImgs : [],
+    eventImgs : string[],
     name : string,
-    category : string,
+    category : string[],
     price: number,
     description : string,
     totalSeats: number,
@@ -19,7 +19,7 @@ interface Event {
         address: string,
         city: string,
         state: string,
-        zip: number,
+        zip: string,
         geoLocation: {lat: number, long: number}
     },
     eventTimeStamp: Date

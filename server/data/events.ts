@@ -1,7 +1,6 @@
 import { ObjectID } from "bson";
 
 import { ObjectId } from "mongodb";
-import { emitWarning } from "process";
 import { fileURLToPath } from "url";
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
@@ -9,24 +8,24 @@ import { Event } from "../models/events.model";
 
 async function createEvent(eventDetails: Event){
 
-    if (typeof(eventDetails.name)!='string') throw 'Error: Name Of The Event Is Not a String.'
-    if (typeof(eventDetails.category)!='string') throw 'Error: Category Of The Event Is Not a String.'
-    if (typeof(eventDetails.description)!='string') throw 'Error: Description Of The Event Is Not a String.'
-    if (typeof(eventDetails.totalSeats)!='number') throw 'Error: TotalSeats Of The Event Is Not a Number.'
-    if (typeof(eventDetails.price)!='number') throw 'Error: Price Of The Event Is Not a Number.'
-    if (typeof(eventDetails.bookedSeats)!='number') throw 'Error: Booked Seats Of The Event Is Not a Number.'
-    if (typeof(eventDetails.minAge)!='number') throw 'Error: Minimum Age Of The Event Is Not a Number.'
+    // if (typeof(eventDetails.name)!='string') throw 'Error: Name Of The Event Is Not a String.'
+    // if (typeof(eventDetails.category)!='string') throw 'Error: Category Of The Event Is Not a String.'
+    // if (typeof(eventDetails.description)!='string') throw 'Error: Description Of The Event Is Not a String.'
+    // if (typeof(eventDetails.totalSeats)!='number') throw 'Error: TotalSeats Of The Event Is Not a Number.'
+    // if (typeof(eventDetails.price)!='number') throw 'Error: Price Of The Event Is Not a Number.'
+    // if (typeof(eventDetails.bookedSeats)!='number') throw 'Error: Booked Seats Of The Event Is Not a Number.'
+    // if (typeof(eventDetails.minAge)!='number') throw 'Error: Minimum Age Of The Event Is Not a Number.'
 
-    if (typeof(eventDetails.hostId)!='string') throw 'Error: Host ID Of The Event Is Not a String.'
-    // if (typeof(ObjectId(event.hostId))!='string') throw 'Error: Host ID Of The Event Is Not a ObjectID.'
-    if (typeof(eventDetails.venue.address)!='string') throw 'Error: Address Of The Venue Is Not a String.'
-    if (typeof(eventDetails.venue.city)!='string') throw 'Error: City Of The Venue Is Not a String.'
-    if (typeof(eventDetails.venue.state)!='string') throw 'Error: State Of The Venue Is Not a String.'
-    // if (typeof(eventDetails.venue.zip)!='string') throw 'Error: ZIP Of The Venue Is Not a String.'
+    // if (typeof(eventDetails.hostId)!='string') throw 'Error: Host ID Of The Event Is Not a String.'
+    // // if (typeof(ObjectId(event.hostId))!='string') throw 'Error: Host ID Of The Event Is Not a ObjectID.'
+    // if (typeof(eventDetails.venue.address)!='string') throw 'Error: Address Of The Venue Is Not a String.'
+    // if (typeof(eventDetails.venue.city)!='string') throw 'Error: City Of The Venue Is Not a String.'
+    // if (typeof(eventDetails.venue.state)!='string') throw 'Error: State Of The Venue Is Not a String.'
+    // // if (typeof(eventDetails.venue.zip)!='string') throw 'Error: ZIP Of The Venue Is Not a String.'
 
-    if (typeof(eventDetails.venue.geoLocation.lat)!='number') throw 'Error: Latitude Of The GeoLocation Of The Event Is Not a Number.'
-    if (typeof(eventDetails.venue.geoLocation.long)!='number') throw 'Error: Longitude Of The GeoLocation Of The Event Is Not a Number.'
-    // if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
+    // if (typeof(eventDetails.venue.geoLocation.lat)!='number') throw 'Error: Latitude Of The GeoLocation Of The Event Is Not a Number.'
+    // if (typeof(eventDetails.venue.geoLocation.long)!='number') throw 'Error: Longitude Of The GeoLocation Of The Event Is Not a Number.'
+    // // if (typeof(eventDetails.eventTimeStamp)!='object') throw 'Error: Date Of The Event Is Invalid.'
     // let hostIdgen = 
     let newEvent : Event = {
         "eventImgs" : [],
@@ -37,7 +36,7 @@ async function createEvent(eventDetails: Event){
         "totalSeats": eventDetails.totalSeats,
         "bookedSeats" : eventDetails.bookedSeats,
         "minAge": eventDetails.minAge,
-        "hostId" : new ObjectId(eventDetails.hostId),
+        "hostId" : eventDetails.hostId,
         "cohostArr" : [],
         "attendeesArr" : [],
         "venue": {
@@ -57,6 +56,8 @@ async function createEvent(eventDetails: Event){
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event){
 
 }
+
+
 async function deleteEvent(eventId: string | ObjectId){
     eventId = new ObjectID(eventId)
     await events()
