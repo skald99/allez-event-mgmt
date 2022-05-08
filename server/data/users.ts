@@ -36,26 +36,26 @@ async function getUser(id : string) {
 }
 
 
-/**
- * This function is used to check whether a person is passing correct credentials when the client is trying to login
- * @param email is of string type
- * @param password is of string type
- * takes the email and checks the password with the userData that contains this email
- * @returns whether the userLoggedIn is true or it will throw an error if the parameters are incorrect.
- */
-async function checkUser(email: string, password: string) {
-    await users(); // instantiating the mongoCollection
+// /**
+//  * This function is used to check whether a person is passing correct credentials when the client is trying to login
+//  * @param email is of string type
+//  * @param password is of string type
+//  * takes the email and checks the password with the userData that contains this email
+//  * @returns whether the userLoggedIn is true or it will throw an error if the parameters are incorrect.
+//  */
+// async function checkUser(email: string, password: string) {
+//     await users(); // instantiating the mongoCollection
 
-    let requestedUser = await collections.users?.findOne({email: email}); // finds the requestedUser using email
+//     let requestedUser = await collections.users?.findOne({email: email}); // finds the requestedUser using email
 
-    if(requestedUser == null) throw 'either email or password is incorrect'; // if the data returned is null throw an error
+//     if(requestedUser == null) throw 'either email or password is incorrect'; // if the data returned is null throw an error
 
-    const checkPassword = await bcrypt.compare(password, requestedUser.password); // check the password using bcrypt
+//     const checkPassword = await bcrypt.compare(password, requestedUser.password); // check the password using bcrypt
 
-    if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
-    console.log(requestedUser);
-    return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
-}
+//     if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
+//     console.log(requestedUser);
+//     return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
+// }
 
 
 /**
@@ -67,7 +67,6 @@ async function createUser(person : User) {
                             
     let newUser : User = { // creating an object that can be inserted into database
         "name": person.name,
-        "password": await bcrypt.hash(person.password, bcryptRounds),
         "address": {
             "city": person.address.city,
             "state": person.address.state,
@@ -107,7 +106,6 @@ async function modifyUser(person : User) {
 
     let modifiedUser : User = {
         "name": person.name,
-        "password": await bcrypt.hash(person.password, bcryptRounds),
         "address": {
             "city": person.address.city,
             "state": person.address.state,
@@ -234,7 +232,6 @@ async function deleteRegisteredEvent(id: string, eventId: string) {
 }
 export default {
     getUser,
-    checkUser,
     createUser, 
     modifyUser,
     getHostedEvents,

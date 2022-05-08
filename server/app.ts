@@ -1,11 +1,32 @@
 //import { User } from "./models/user.model"; 
+//import { initializeApp } from "firebase/app";
+//import firebase from "firebase/app";
+//import firestore from "firebase/firestore";
+//import * as functions from "firebase-functions";
+import * as admin from "firebase-admin/app";
+import * as keyAdmin from "firebase-admin";
+import * as firestore from "firebase-admin/firestore";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAhlIfs1X-mXFWaNqJX15Ew83SY9X-_NLs",
+    authDomain: "allez-3e5a1.firebaseapp.com",
+    projectId: "allez-3e5a1",
+    storageBucket: "allez-3e5a1.appspot.com",
+    messagingSenderId: "491306185561",
+    appId: "1:491306185561:web:78fbfcb2570c17c1659248",
+    measurementId: "G-2BMLN6HEX9"
+  };
+const credential = {credential: keyAdmin.credential.cert(require('../firebase-private-key.json'))};
+// initialize firebase
+const firebaseApp = admin.initializeApp(credential);
 
 import express from 'express';
 import session from "express-session";
 const app = express();
 import configRoutes from "./routes";
-app.use(express.json());
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
@@ -14,6 +35,19 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }))
+
+// app.use(
+//     session({
+//       store: new FirestoreStore({
+//         dataset: new Firestore(),
+//         kind: 'express-sessions',
+//       }),
+//       secret: 'my-secret',
+//       resave: false,
+//       saveUninitialized: true,
+//     })
+//   );
+  
 
 app.post('/users/login', (req, res, next) => {
     if(req.session.userId) res.status(401).json({ "success": false, "result": 'user is already logged in.'});
@@ -51,84 +85,16 @@ app.get('/users/logout', (req, res, next) => {
     else next();
 })
 
-// //import data from "./data";
-// //const usersData = data.usersData;
-// //import { checkUser, createUser, getUser, modifyUser } from "./data/users";
-// import { ObjectId } from "mongodb";
 
-// async function main() {
-//     try{
+// initialize the database and the collection
+const firestoreDb = firestore.getFirestore();
+// exports.firestoreDb = firestoreDb;
+export default firestoreDb;
 
-//     // let person : User = {
-//     //     name: "Test111",
-//     //     password: "Check",
-//     //     address: {
-//     //         city: "Miami",
-//     //         state: "Florida",
-//     //         zip: "11002"
-//     //     },
-//     //     gender: "M",
-//     //     dateOfBirth: new Date("2020-12-10"),
-//     //     email: "test123@gmail.com",
-//     //     hostEventArray: ["Test1","Test2","Test3"],
-//     //     attendEventArray: ["Check1","Check2","Check3"]
-//     // };
-//     // let createdUser = await usersData.createUser(person);
-//     // console.log(createdUser);
-
-//     /**
-//      * retrieve user details
-//      */
-//     // let id : string = "625c63b53e90e43f3a621db5";
-//     // let requestedUser = await usersData.getUser(id);
-//     // console.log(requestedUser);
-
-//     /**
-//      * validating user login credentials
-//      */
-//     // let name : string = "test123@gmail.com";
-//     // let password : string = "Check";
-//     // let userLog = await checkUser(name, password);
-//     // console.log(userLog);
-
-//     /**
-//      * modifying user details
-//      */
-//     // let person : User = {
-//     //     name: "Test111modified",
-//     //     password: "Check",
-//     //     address: {
-//     //         city: "Miami",
-//     //         state: "Florida",
-//     //         zip: "11002"
-//     //     },
-//     //     gender: "M",
-//     //     dateOfBirth: new Date("2020-12-10"),
-//     //     email: "test123@gmail.com",
-//     //     hostEventArray: ["Test1","Test2","Test3"],
-//     //     attendEventArray: ["Check1","Check2","Check3"]
-//     // };
-//     // let modifiedUser = await usersData.modifyUser(person);
-//     // console.log(modifiedUser);
-
-//     }catch(e){
-//         console.log(e);
-//     }
-// }
-
-// main();
-
-// app.use(async(req, res, next) => {
-//     let timeStamp = new Date().toUTCString();
-//     let reqMethod = req.method;
-//     let reqUserId = req.session.userId;
-//     let reqRoute = req.originalUrl;
-//     if(req.session.userId) console.log(timeStamp + ': ' + reqUserId+ ': ' + reqMethod + reqRoute + 'Authenticated user');
-//     else console.log(timeStamp + ': '+ reqUserId+ ': ' + reqMethod + reqRoute + 'Non-Authenticated user');
-//     next();
-// });
 
 configRoutes(app);
+
+// exports.app = functions.https.onRequest(app);
 
 app.listen(4000, () => {
     console.log("We have now got a server");
