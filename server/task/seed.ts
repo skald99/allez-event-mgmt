@@ -59,7 +59,7 @@ async function seedData(num: number) {
             console.log("Check22");
             console.log(typeof event?._id);
             eventIds.push(event?._id.toString()!, event2?._id.toString()!);
-            login.push({ email: tempUser.email, password: tempUser.password });
+            //login.push({ email: tempUser.email, password: tempUser.password });
             console.log(`Inserting Users: ${i}/${num - 1}`);
         } catch (e) {
             console.log(e);
