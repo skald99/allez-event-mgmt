@@ -36,26 +36,26 @@ async function getUser(id : string) {
 }
 
 
-/**
- * This function is used to check whether a person is passing correct credentials when the client is trying to login
- * @param email is of string type
- * @param password is of string type
- * takes the email and checks the password with the userData that contains this email
- * @returns whether the userLoggedIn is true or it will throw an error if the parameters are incorrect.
- */
-async function checkUser(email: string, password: string) {
-    await users(); // instantiating the mongoCollection
+// /**
+//  * This function is used to check whether a person is passing correct credentials when the client is trying to login
+//  * @param email is of string type
+//  * @param password is of string type
+//  * takes the email and checks the password with the userData that contains this email
+//  * @returns whether the userLoggedIn is true or it will throw an error if the parameters are incorrect.
+//  */
+// async function checkUser(email: string, password: string) {
+//     await users(); // instantiating the mongoCollection
 
-    let requestedUser = await collections.users?.findOne({email: email}); // finds the requestedUser using email
+//     let requestedUser = await collections.users?.findOne({email: email}); // finds the requestedUser using email
 
-    if(requestedUser == null) throw 'either email or password is incorrect'; // if the data returned is null throw an error
+//     if(requestedUser == null) throw 'either email or password is incorrect'; // if the data returned is null throw an error
 
-    const checkPassword = await bcrypt.compare(password, requestedUser.password); // check the password using bcrypt
+//     const checkPassword = await bcrypt.compare(password, requestedUser.password); // check the password using bcrypt
 
-    if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
-    console.log(requestedUser);
-    return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
-}
+//     if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
+//     console.log(requestedUser);
+//     return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
+// }
 
 
 /**
@@ -67,7 +67,6 @@ async function createUser(person : User) {
                             
     let newUser : User = { // creating an object that can be inserted into database
         "name": person.name,
-        "password": await bcrypt.hash(person.password, bcryptRounds),
         "address": {
             "city": person.address.city,
             "state": person.address.state,
@@ -107,7 +106,6 @@ async function modifyUser(person : User) {
 
     let modifiedUser : User = {
         "name": person.name,
-        "password": await bcrypt.hash(person.password, bcryptRounds),
         "address": {
             "city": person.address.city,
             "state": person.address.state,
@@ -185,12 +183,62 @@ async function deleteUser(id: string) {
     return {userDeleted: true};
 }
 
+async function addHostedEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let addingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {hostEventArray: eventId}}); // finds the requestedUser using id
+
+    if(addingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+
+    return {addedHostedEvent: true};
+}
+
+async function addRegisteredEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let addingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {attendEventArray: eventId}}); // finds the requestedUser using id
+
+    if(addingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+
+    return {addedRegisteredEvent: true};
+}
+
+async function deleteHostedEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let deletingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {hostEventArray: eventId}}); // finds the requestedUser using id
+
+    if(deletingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+
+    return {deletingHostedEvent: true};
+}
+
+async function deleteRegisteredEvent(id: string, eventId: string) {
+    await users(); // instantiating the mongoCollection
+
+    let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
+
+    let deletingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {attendEventArray: eventId}}); // finds the requestedUser using id
+
+    if(deletingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+
+    return {deletingRegisteredEvent: true};
+}
 export default {
     getUser,
-    checkUser,
     createUser, 
     modifyUser,
     getHostedEvents,
     getRegisteredEvents,
-    deleteUser
+    deleteUser,
+    addHostedEvent,
+    addRegisteredEvent,
+    deleteHostedEvent,
+    deleteRegisteredEvent
 };
