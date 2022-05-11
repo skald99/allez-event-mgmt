@@ -35,7 +35,6 @@ function newUser(): User {
   let newUser: User = {
       name: name,
       email: email,
-      password: password,
       phone: phone,
       gender: gender,
       address: address,

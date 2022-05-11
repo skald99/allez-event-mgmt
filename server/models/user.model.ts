@@ -15,7 +15,6 @@ interface User {
     gender: string,
     dateOfBirth: Date,
     email: string,
-    password: string,
     hostEventArray: string[],
     attendEventArray: string[]
 }
