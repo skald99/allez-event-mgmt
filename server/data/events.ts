@@ -3,20 +3,22 @@ import { ObjectID } from "bson";
 import { ObjectId } from "mongodb";
 import { collections, users, events } from "../config/mongoCollections";
 import { Event } from "../models/events.model";
+import newEvent from "../task/events";
 import usersdata from "./users";
 
 
 async function createEvent(eventDetails: Event){
-    
+    console.log(eventDetails.bookedSeats)
+    console.log(typeof(eventDetails.bookedSeats))
     let newEvent : Event = {
         "eventImgs" : eventDetails.eventImgs,
         "name" : eventDetails.name,
         "category" : eventDetails.category,
-        "price": eventDetails.price,
+        "price": Number(eventDetails.price),
         "description" : eventDetails.description,
-        "totalSeats": eventDetails.totalSeats,
-        "bookedSeats" : eventDetails.bookedSeats,
-        "minAge": eventDetails.minAge,
+        "totalSeats": Number(eventDetails.totalSeats),
+        "bookedSeats" : Number(eventDetails.bookedSeats),
+        "minAge": Number(eventDetails.minAge),
         "hostId" : eventDetails.hostId,
         "cohostArr" : [],
         "attendeesArr" : [],
@@ -25,12 +27,13 @@ async function createEvent(eventDetails: Event){
             "city": eventDetails.venue.city,
             "state": eventDetails.venue.state,
             "zip": eventDetails.venue.zip,
-            "geoLocation": {lat: eventDetails.venue.geoLocation.lat, long: eventDetails.venue.geoLocation.long}
+            "geoLocation": {lat: Number(eventDetails.venue.geoLocation.lat), long: Number(eventDetails.venue.geoLocation.long)}
         },
         "eventTimeStamp": eventDetails.eventTimeStamp
     }
     await events()
     let created = await collections.events?.insertOne(newEvent);
+    console.log(created)
     let insertedEvent = await collections.events?.findOne({_id: created?.insertedId});
     if(insertedEvent) insertedEvent._id = insertedEvent._id.toString();
     else throw "Event is not inserted properly";
@@ -73,8 +76,9 @@ async function deleteEvent(eventId: string | ObjectId){
     eventId = new ObjectID(eventId)
     await events()
     let removingEvent = await collections.events?.findOne({_id: eventId});
+    console.log(removingEvent)
     if(removingEvent) removingEvent._id = removingEvent._id.toString();
-    else throw "There is no event with the requested id";
+    else throw [400, "There is no event with the requested id"];
 
     let deletedEvent = await collections.events?.deleteOne({_id: eventId})
     if(deletedEvent?.deletedCount===0){
@@ -173,10 +177,9 @@ async function addCohost(eventId: string | ObjectId, userId: string){
 async function addAttendee(eventId: string | ObjectId, userId: string){
 
     eventId = new ObjectId(eventId)
-    console.log(userId)
     await events();
-    let requestedEvent = await collections.events?.findOne({_id: eventId});
-    console.log(requestedEvent?._id.toString())
+    let requestedEvent = await collections.events?.findOne({_id: eventId})
+    if(!requestedEvent) throw [400, "Event Not Found"]
     if(requestedEvent?.totalSeats===requestedEvent?.bookedSeats){
         throw [400, 'Event Is Full Already']
     }
@@ -186,16 +189,20 @@ async function addAttendee(eventId: string | ObjectId, userId: string){
     if(requestedEvent?.cohostArr?.includes(userId)){
         throw [400, "You're A Cohost"]
     }
-    let attendeeUpdated = await collections.events?.updateOne({_id: eventId},{$addToSet: {attendeesArr:userId}});
-    console.log(attendeeUpdated)
+    else{
+
+      let attendeeUpdated = await collections.events?.updateOne({_id: eventId},{$addToSet: {attendeesArr:userId}});
     if(attendeeUpdated?.modifiedCount===0){
-        //Already registered
         throw [400, "You Have Already Registered For The Event"]
     }
     else{
-        await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: 1}})
+        console.log("Attendee added")
+        let updateCount = await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: 1}})
         return "Attendee added successfully"
     }
+
+}
+
 }
 
 async function unRegister(eventId: string | ObjectId, userId: string){
@@ -203,14 +210,14 @@ async function unRegister(eventId: string | ObjectId, userId: string){
     eventId = new ObjectId(eventId)
     await events();
     let removeAttendee = await collections.events?.updateOne({_id: eventId},{$pull: {attendeesArr:userId}})
-    if(removeAttendee?.modifiedCount===0) throw [400, "User Not Present"]
+    if(removeAttendee?.modifiedCount===0) throw [400, "User/Event Not Present"]
     else{
         await collections.events?.updateOne({_id:eventId}, {$inc:{bookedSeats: -1}})
         return "Attendee unregistered successfully"
-    }
-   
-    
+    }   
 }
+
+
 async function removeCohost(eventId: string | ObjectId, userId: string){
 
     eventId = new ObjectId(eventId)
@@ -273,10 +280,12 @@ async function getByFilter(filters: {city ?: string, state ?: string, category ?
 }
 async function getbyId(ids: {eventId ?: string | ObjectId, hostId ?: string | ObjectId }){
     await events();
-    console.log(ids)
+    console.log("Inside getbyid functiion")
     if(ids.eventId && ids.hostId){
         let neweventId = new ObjectId(ids.eventId)
-        let newhostId = new ObjectId(ids.hostId)
+        let newhostId = ids.hostId.toString();
+        console.log(neweventId)
+        console.log(newhostId)
         let requestedEvent = await collections.events?.findOne({_id: neweventId, hostId: newhostId});
         if(requestedEvent===null) throw [400, 'Event Not Found With that ID And HostId']
         return requestedEvent;
@@ -286,10 +295,10 @@ async function getbyId(ids: {eventId ?: string | ObjectId, hostId ?: string | Ob
         let neweventId = new ObjectId(ids.eventId)
         let requestedEvent = await collections.events?.findOne({_id: neweventId});
         if(requestedEvent===null) throw [400, 'Event Not Found']
-        return requestedEvent;
+        return requestedEvent
     }
     else if(ids.hostId){
-    let newhostId = new ObjectId(ids.hostId)
+    let newhostId = ids.hostId.toString();
     let requestedEvent = await collections.events?.find({hostId: newhostId}).toArray();
     if(requestedEvent?.length===0){
         throw [400, "No Events By that Host Found"]
