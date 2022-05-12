@@ -60,7 +60,9 @@ const Map: React.FC<VenueProps> = ({venue, placeId}) => {
                 onLoad={onLoad}
                 options={options}
             >
-                { venueCoord && (<Marker position={venueCoord} icon="https://img.icons8.com/plasticine/40/000000/marker.png" />)}
+                { venueCoord && (
+                    <Marker position={venueCoord} icon="https://img.icons8.com/plasticine/40/000000/marker.png" animation={google.maps.Animation.DROP}/>
+                )}
             </GoogleMap>
         </div>
     )

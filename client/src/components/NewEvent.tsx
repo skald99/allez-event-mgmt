@@ -4,13 +4,15 @@ import { useForm, SubmitHandler, SubmitErrorHandler, Controller } from "react-ho
 import { ErrorMessage } from "@hookform/error-message"
 import Select, { MultiValue } from "react-select";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { addDays } from "date-fns";
 import {useJsApiLoader} from "@react-google-maps/api";
 import { Combobox } from "react-widgets/cjs";
 import usePlacesAutocomplete from "use-places-autocomplete";
+
+import "react-datepicker/dist/react-datepicker.css";
 import "react-widgets/styles.css";
 import Map from "./Map";
+import ImageModal from "./ImageModal";
 
 type Address = {
     address: string;
@@ -38,8 +40,18 @@ type newEventData = {
 
 }
 
-const NewEvent = () => {
-    
+export enum EventType {
+    "NEW" = 0,
+    "EDIT" = 1
+}
+
+type EventProps = {
+    type: EventType
+}
+
+
+const NewEvent: React.FC<EventProps> = ({type}) => {
+    console.log(type)
     const [eventData, setEventData] = React.useState<newEventData|undefined>(undefined);
     const {register, handleSubmit, formState: {errors}, control} = useForm<newEventData>();
     const onSubmit: SubmitHandler<newEventData> = data => setEventData(data);
@@ -47,8 +59,13 @@ const NewEvent = () => {
     const [venue, setVenue] = React.useState<string>("");
     const [placeId, setPlaceId] = React.useState<string>("");
     const [selectedDate, setSelectedDate] = React.useState<Date>();
+    const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
 
-    const { isLoaded, loadError } = useJsApiLoader({
+    if(type) {
+        
+    }
+
+    const { isLoaded } = useJsApiLoader({
         id: "google-script",
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API!,
         libraries: ["places"]
@@ -91,6 +108,10 @@ const NewEvent = () => {
             setVenue(loc);
             setPlaceId(id);
             clearSuggestions();
+    }
+
+    const previewImgsFunc = () => {
+
     }
     
     return(
@@ -296,17 +317,30 @@ const NewEvent = () => {
                             </div>
                         </div>
                         <br/>
-                        <div className="">
-                            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-                                Add Event
-                            </button>
-                        
+                        <div className="grid grid-cols-2 gap-5">
+                            <div>
+                                <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" data-modal-toggle="imageModal">
+                                    Upload Images
+                                </button>
+                            
+                            </div>
+                            <div>
+                                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded focus:outline-none focus:shadow-outline" type="submit">
+                                    Add Event
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div>
                     {isLoaded ? <Map venue = {venue} placeId = {placeId}/> : <div className="w-full h-screen animate-spin"></div>}
                 </div>
+            </div>
+            <div id="imageModal" tabIndex={-1} aria-hidden="true" className="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full">
+                <div className="relative p-4 w-full max-w-4xl h-full md:h-auto">
+                    <ImageModal previewImgs={previewImgsFunc}/>
+                </div>
+
             </div>
         </div>
     )
