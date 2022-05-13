@@ -2,17 +2,13 @@ import React, { useEffect } from "react";
 import {useDropzone} from "react-dropzone";
 
 
-type ImageData = {
-    previewImgs: () => void
-}
-
 type ImageDetails = {
     file: File
     preview: string
 
 }
 
-const ImageModal = ({previewImgs = () => {}} : ImageData) => {
+const ImageModal = (props: { previewImgs: (files: ImageDetails[]) => void; hideModal: () => void}) => {
 
     const [files, setFiles] = React.useState<ImageDetails[]>([]);
     
@@ -56,12 +52,6 @@ const ImageModal = ({previewImgs = () => {}} : ImageData) => {
             <button type="button" className="bg-red-500 w-full text-white font-sans text-sm rounded p-2 mt-1" onClick={removeImage(file)}>Remove</button>
         </div>
     ));
-
-    
-    const hideModal = () => {
-        setFiles([]);
-    }
-
     
     useEffect(() => {
         return() => files.forEach(file => URL.revokeObjectURL(file.preview));
@@ -69,8 +59,13 @@ const ImageModal = ({previewImgs = () => {}} : ImageData) => {
 
 
     return (
-        <div className="relative bg-slate-100 rounded-lg shadow dark:bg-gray-700">
-            <button type="button" className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white" data-modal-toggle="imageModal" onClick={hideModal}>
+        <div className="relative bg-zinc-50 rounded-lg shadow-lg dark:bg-gray-700">
+            <button type="button" className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white" onClick={() => {
+                if(files.length === 0) {
+                    removeAllImages()
+                }
+                props.hideModal()
+            }}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>  
             </button>
             <div className="py-6 px-6 lg:px-8">
@@ -88,7 +83,10 @@ const ImageModal = ({previewImgs = () => {}} : ImageData) => {
                                 <button type="button" className="bg-red-700 mx-4 py-2 px-20 text-gray-100 font-sans mt-2 rounded-md align-bottom hover:bg-red-900" onClick={removeAllImages}>Remove All</button>
                             </div>
                             <div>
-                            <button type="button" className="bg-blue-500 mx-4 py-2 px-24 text-gray-100 font-sans mt-2 rounded-md align-bottom hover:bg-blue-700">Upload</button>
+                            <button type="button" className="bg-blue-500 mx-4 py-2 px-24 text-gray-100 font-sans mt-2 rounded-md align-bottom hover:bg-blue-700" onClick={() => {
+                                props.previewImgs(files);
+                                props.hideModal();
+                            }}>Upload</button>
                             </div>
                         </div>
                     }
