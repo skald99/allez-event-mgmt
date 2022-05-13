@@ -84,7 +84,7 @@ const EventList = () => {
     }
 
     function filterByCategories(curEvents: eventModel[]) {
-        let results = []
+        let results:eventModel[] = []
         for (let eve of curEvents) {
             let categories = eve.category
             for (let cat of categories) {
@@ -186,7 +186,7 @@ const EventList = () => {
 
 
     return (
-        <div>
+        <div className='mx-8'>
             <div className="flex items-center justify-between mt-4">
                 <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Event DashBoard</h2>
                 <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-md" onClick={()=>{
