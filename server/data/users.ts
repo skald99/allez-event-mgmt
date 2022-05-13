@@ -64,28 +64,41 @@ async function getUser(id : string) {
  * @returns the newly created user details 
  */
 async function createUser(person : User) {
-                            
+    if(typeof(person.name)!='string'||typeof(person.gender)!='string'||typeof(person.email)!='string'||
+    typeof(person.address.city)!='string'||
+    typeof(person.address.state)!='string'||
+    typeof(person.address.postal_code)!='string'||
+    typeof(person.address.country)!='string') throw [400, "Data Not In Right Format"]
+
+    if(!person.name.trim() || !person.gender.trim() || !person.email.trim()  || 
+    !person.address.city.trim() || !person.address.state.trim() || !person.address.postal_code.trim() ||
+     !person.address.country.trim() ) throw [400, "Data Not In Right Format"]
+
+     if(isNaN(Number(person.phone)))throw [400, "Data Not In Right Format"]
+
+     if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
+     !isNaN(Number(person.address.postal_code)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
+     !isNaN(Number(person.email))
+     ) throw [400, "Data Not In Correct Format"]                        
     let newUser : User = { // creating an object that can be inserted into database
-        "name": person.name,
+        "name": person.name.trim(),
         "address": {
-            "city": person.address.city,
-            "state": person.address.state,
-            "postal_code": person.address.postal_code,
-            "country": person.address.country
+            "city": person.address.city.trim(),
+            "state": person.address.state.trim(),
+            "postal_code": person.address.postal_code.trim(),
+            "country": person.address.country.trim()
         },
-        "phone": person.phone,
-        "gender": person.gender,
-        "email": person.email,
+        "phone": Number(person.phone),
+        "gender": person.gender.trim(),
+        "email": person.email.trim(),
         "dateOfBirth": person.dateOfBirth,
-        "hostEventArray": person.hostEventArray,
-        "attendEventArray": person.attendEventArray
+        "hostEventArray": [],
+        "attendEventArray": []
     }
-    console.log("Test");
     
     await users(); // instantiating the mongoCollection
 
     let result = await collections.users?.insertOne(newUser); // inserting the object into the database along with a newly created user objectId
-    console.log(result);
     if(result?.acknowledged == false) throw [400,'could not register the user']; // if unable to store the details throw an error
     let createUserData = await collections.users?.findOne({_id: result?.insertedId}); // finding the newly inserted object with the new userId
     if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
@@ -101,30 +114,44 @@ async function createUser(person : User) {
  * @returns the modified details of the user
  */
 async function modifyUser(person : User) {
-                            
+    if(typeof(person.name)!='string'||typeof(person.gender)!='string'||typeof(person.email)!='string'||
+    typeof(person.address.city)!='string'||
+    typeof(person.address.state)!='string'||
+    typeof(person.address.postal_code)!='string'||
+    typeof(person.address.country)!='string') throw [400, "Data Not In Right Format"]
+
+    if(!person.name.trim() || !person.gender.trim() || !person.email.trim()  || 
+    !person.address.city.trim() || !person.address.state.trim() || !person.address.postal_code.trim() ||
+     !person.address.country.trim() ) throw [400, "Data Not In Right Format"]
+
+     if(isNaN(Number(person.phone)))throw [400, "Data Not In Right Format"]
+
+     if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
+     !isNaN(Number(person.address.postal_code)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
+     !isNaN(Number(person.email))
+     ) throw [400, "Data Not In Correct Format"]
+
     let parseId = new ObjectId(person._id);
 
     let modifiedUser : User = {
-        "name": person.name,
+        "name": person.name.trim(),
         "address": {
-            "city": person.address.city,
-            "state": person.address.state,
-            "postal_code": person.address.postal_code,
-            "country": person.address.country
+            "city": person.address.city.trim(),
+            "state": person.address.state.trim(),
+            "postal_code": person.address.postal_code.trim(),
+            "country": person.address.country.trim()
         },
-        "phone": person.phone,
-        "gender": person.gender,
-        "email": person.email,
+        "phone": Number(person.phone),
+        "gender": person.gender.trim(),
+        "email": person.email.trim(),
         "dateOfBirth": person.dateOfBirth,
         "hostEventArray": person.hostEventArray,
         "attendEventArray": person.attendEventArray
     }
-    console.log("Test");
     
     await users(); // instantiating the mongoCollection
 
     let result = await collections.users?.updateOne( {_id: parseId}, {$set: modifiedUser});
-    console.log(result);
     if(result?.modifiedCount === 0) throw [400,'could not modify the users details']; // if unable to update throw an error
     let createUserData = await collections.users?.findOne({email: person.email}); // finding the newly inserted object with the new userId
     if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
@@ -138,6 +165,7 @@ async function modifyUser(person : User) {
  * @returns all the events that are hosted by the user
  */
 async function getHostedEvents(id : string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -155,6 +183,7 @@ async function getHostedEvents(id : string) {
  * @returns all the events that user has registered
  */
 async function getRegisteredEvents(id: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -172,6 +201,7 @@ async function getRegisteredEvents(id: string) {
  * @returns if the user is deleted or will throw an error
  */
 async function deleteUser(id: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -184,6 +214,8 @@ async function deleteUser(id: string) {
 }
 
 async function addHostedEvent(id: string, eventId: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -196,6 +228,8 @@ async function addHostedEvent(id: string, eventId: string) {
 }
 
 async function addRegisteredEvent(id: string, eventId: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -208,6 +242,8 @@ async function addRegisteredEvent(id: string, eventId: string) {
 }
 
 async function deleteHostedEvent(id: string, eventId: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
@@ -220,6 +256,8 @@ async function deleteHostedEvent(id: string, eventId: string) {
 }
 
 async function deleteRegisteredEvent(id: string, eventId: string) {
+    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId

@@ -1,26 +1,17 @@
 import express from 'express';
-// import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-// const auth = getAuth();
 import firestoreDb from "../app";
 import { User } from '../models/user.model';
 const router = express.Router();
 import data from "../data";
-//import { user } from 'firebase-functions/v1/auth';
-//import { getUnpackedSettings } from 'http2';
-// import { fstat } from 'fs';
-// import { app } from 'firebase-admin';
 const usersData = data.usersData;
-//import { Session }  from "../models/session.model";
-
+const xss = require('xss');
 
 router.get("/logout", async(req, res) => {
     try{
         let statuscode: number = 200;
         req.session.destroy((err) => {
-            //console.log(err);
             if(req.session) throw 400;
         })
-        console.log("session should be destroyed" + req.session.userId);
     }catch(e){
         if(e == 400) res.status(400).json({"success": false, "result": e});
         else res.status(200).json({"success": true, "result": "user has successfully logged out"});
@@ -29,7 +20,7 @@ router.get("/logout", async(req, res) => {
 
 router.get("/", async(req, res) => {
     try{
-        let id: string = req.session.userId;
+        let id: string = xss(req.session.userId);
         let getUserDetails = await usersData.getUser(id);
         console.log(getUserDetails);
         res.status(200).json({ "success": true, "result": getUserDetails });
@@ -40,19 +31,17 @@ router.get("/", async(req, res) => {
 
 router.post("/login", async(req, res) => {
     try{
-        let email: string = req.body.email;
-        let password: string = req.body.password;
-        //let userLogin = await usersData.checkUser(email, password);
-        //console.log(userLogin);
-
+        if(typeof(req.body.email)!='string'||typeof(req.body.password)!='string') throw [400, "Data Not In Right Format"]
+        if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Data Not In Right Format"]
+        let email: string = xss(req.body.email);
+        let password: string = xss(req.body.password);
         // retrieve if there is data with the given email
+        
         const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).where("password", "==", password).get();
+        
         if(querySnapshot.docs[0]){
-            // const query = await querySnapshot.docs[0].where("password", "==", password);
-            // if(query != "") req.session.userId = query.userId;
-            // else throw `Either email or password are invalid.`;
 
-            let getUserDetails = await usersData.getUser(querySnapshot.docs[0].data().userId);
+            let getUserDetails = await usersData.getUser(xss(querySnapshot.docs[0].data().userId));
             
             req.session.userId = querySnapshot.docs[0].data().userId;
             req.session.userName = getUserDetails.name;
@@ -67,24 +56,39 @@ router.post("/login", async(req, res) => {
 
 router.post("/", async(req, res) => {
     try{
+        if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email)!='string'||
+        typeof(req.body.address.city)!='string'||
+        typeof(req.body.address.state)!='string'||
+        typeof(req.body.address.postal_code)!='string'||
+        typeof(req.body.address.country)!='string') throw [400, "Data Not In Right Format"]
+
+        if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim()  || 
+        !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code.trim() ||
+         !req.body.address.country.trim() ) throw [400, "Data Not In Right Format"]
+
+         if(isNaN(Number(req.body.phone)))throw [400, "Data Not In Right Format"]
+
+         if( !isNaN(Number(req.body.name)) || !isNaN(Number(req.body.address.city)) || !isNaN(Number(req.body.address.state)) ||
+         !isNaN(Number(req.body.address.postal_code)) || !isNaN(Number( req.body.address.country)) || !isNaN(Number(req.body.gender)) ||
+         !isNaN(Number(req.body.email))
+         ) throw [400, "Data Not In Correct Format"]
         let newUser: User = {
-            "name": req.body.name,
+            "name": xss(req.body.name.trim()),
             "address": {
-                "city": req.body.address.city,
-                "state": req.body.address.state,
-                "postal_code": req.body.address.postal_code,
-                "country": req.body.address.country
+                "city": xss(req.body.address.city.trim()),
+                "state": xss(req.body.address.state.trim()),
+                "postal_code": xss(req.body.address.postal_code.trim()),
+                "country": xss(req.body.address.country.trim())
             },
-            "phone": req.body.phone,
-            "gender": req.body.gender,
-            "email": req.body.email,
-            "dateOfBirth": req.body.dateOfBirth,
-            "hostEventArray": req.body.hostEventArray,
-            "attendEventArray": req.body.attendEventArray
+            "phone": xss(Number(req.body.phone)),
+            "gender": xss(req.body.gender.trim()),
+            "email": xss(req.body.email.trim()),
+            "dateOfBirth": xss(req.body.dateOfBirth),
+            "hostEventArray": [],
+            "attendEventArray": []
         }
 
         let newlyCreatedUser = await usersData.createUser(newUser);
-        console.log(newlyCreatedUser);
 
         const querySnapshot = await firestoreDb.collection("users").add({
             email: req.body.email,
@@ -100,21 +104,38 @@ router.post("/", async(req, res) => {
 
 router.put("/", async(req, res) => {
     try{
+        if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email)!='string'||
+        typeof(req.body.address.city)!='string'||
+        typeof(req.body.address.state)!='string'||
+        typeof(req.body.address.postal_code)!='string'||
+        typeof(req.body.address.country)!='string') throw [400, "Data Not In Right Format"]
+
+        if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim()  || 
+        !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code.trim() ||
+         !req.body.address.country.trim() ) throw [400, "Data Not In Right Format"]
+
+         if(isNaN(Number(req.body.phone)))throw [400, "Data Not In Right Format"]
+
+         if( !isNaN(Number(req.body.name)) || !isNaN(Number(req.body.address.city)) || !isNaN(Number(req.body.address.state)) ||
+         !isNaN(Number(req.body.address.postal_code)) || !isNaN(Number( req.body.address.country)) || !isNaN(Number(req.body.gender)) ||
+         !isNaN(Number(req.body.email))
+         ) throw [400, "Data Not In Correct Format"]
+
         let newUser: User = {
-            "_id": req.session.id,
-            "name": req.body.name,
+            "_id": xss(req.session.id),
+            "name": xss(req.body.name.trim()),
             "address": {
-                "city": req.body.address.city,
-                "state": req.body.address.state,
-                "postal_code": req.body.address.postal_code,
-                "country": req.body.address.country
+                "city": xss(req.body.address.city.trim()),
+                "state": xss(req.body.address.state.trim()),
+                "postal_code": xss(req.body.address.postal_code.trim()),
+                "country": xss(req.body.address.country.trim())
             },
-            "phone": req.body.phone,
-            "gender": req.body.gender,
-            "email": req.body.email,
-            "dateOfBirth": req.body.dateOfBirth,
-            "hostEventArray": req.body.hostEventArray,
-            "attendEventArray": req.body.attendEventArray
+            "phone": xss(Number(req.body.phone)),
+            "gender": xss(req.body.gender.trim()),
+            "email": xss(req.body.email.trim()),
+            "dateOfBirth": xss(req.body.dateOfBirth.trim()),
+            "hostEventArray": xss(req.body.hostEventArray),
+            "attendEventArray": xss(req.body.attendEventArray)
         }
 
         let updatedUser = await usersData.modifyUser(newUser);
@@ -140,7 +161,7 @@ router.put("/", async(req, res) => {
 
 router.get("/getHostedEvents", async(req, res) => {
     try{
-        let hostedEvents = await usersData.getHostedEvents(req.session.userId);
+        let hostedEvents = await usersData.getHostedEvents(xss(req.session.userId));
         console.log(hostedEvents);
         res.status(200).json({ "success": true, "result": hostedEvents });
     }catch(e){
@@ -150,7 +171,7 @@ router.get("/getHostedEvents", async(req, res) => {
 
 router.get("/getRegisteredEvents", async(req, res) => {
     try{
-        let registeredEvents = await usersData.getRegisteredEvents(req.session.userId);
+        let registeredEvents = await usersData.getRegisteredEvents(xss(req.session.userId));
         console.log(registeredEvents);
         res.status(200).json({ "success": true, "result": registeredEvents });
     }catch(e){
@@ -160,8 +181,11 @@ router.get("/getRegisteredEvents", async(req, res) => {
 
 router.post("/changepassword", async(req, res) => {
     try{
-        let oldPassword: string = req.body.oldPassword
-        let newPassword: string = req.body.newPassword;
+        if(typeof(req.body.oldPassword)!='string'||typeof(req.body.newPassword)!='string') throw [400, "Data Not In Right Format"]
+        if(!req.body.oldPassword.trim() || !req.body.newPassword.trim() ) throw [400, "Data Not In Right Format"]
+
+        let oldPassword: string = req.body.oldPassword.trim()
+        let newPassword: string = req.body.newPassword.trim();
         let userId: string = req.session.userId;
 
         console.log("userId", userId);
@@ -191,11 +215,9 @@ router.delete("/", async(req, res) => {
         if(!firebaseId) throw `could not find any account with the given userId`;
         const querySnapshot = await firestoreDb.collection("users").doc(firebaseId).delete()
         req.session.destroy((err) => {
-            //if(!req.session) throw null;
         })
         if(!req.session) res.status(200).json({ "success": true, "result": deleteRequestedUser });
     }catch(e){
-        //if(e == null) res.status(200).json({"success": true, "result": "User account has been deleted successfully"});
         res.status(400).json({ "success": false, "result": e });
     }
 })
