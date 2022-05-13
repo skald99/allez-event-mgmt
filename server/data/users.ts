@@ -28,7 +28,7 @@ async function getUser(id : string) {
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw 'could not find the requested user'; // if the data returned is null throw an error
+    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
     
     requestedUser._id = requestedUser._id.toString(); // convert the id format from ObjectId to String
     console.log(requestedUser);
@@ -86,9 +86,9 @@ async function createUser(person : User) {
 
     let result = await collections.users?.insertOne(newUser); // inserting the object into the database along with a newly created user objectId
     console.log(result);
-    if(result?.acknowledged == false) throw 'could not register the user'; // if unable to store the details throw an error
+    if(result?.acknowledged == false) throw [400,'could not register the user']; // if unable to store the details throw an error
     let createUserData = await collections.users?.findOne({_id: result?.insertedId}); // finding the newly inserted object with the new userId
-    if(createUserData == null) throw 'could not find the details of the registered user'; // if unable to find details of user throw an error
+    if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     console.log(createUserData);
     return createUserData;
@@ -125,9 +125,9 @@ async function modifyUser(person : User) {
 
     let result = await collections.users?.updateOne( {_id: parseId}, {$set: modifiedUser});
     console.log(result);
-    if(result?.modifiedCount === 0) throw 'could not modify the users details'; // if unable to update throw an error
+    if(result?.modifiedCount === 0) throw [400,'could not modify the users details']; // if unable to update throw an error
     let createUserData = await collections.users?.findOne({email: person.email}); // finding the newly inserted object with the new userId
-    if(createUserData == null) throw 'could not find the details of the registered user'; // if unable to find details of user throw an error
+    if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     return createUserData;
 }
@@ -144,7 +144,7 @@ async function getHostedEvents(id : string) {
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw 'could not find the requested user'; // if the data returned is null throw an error
+    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
     
     return requestedUser.hostEventArray;
 }
@@ -161,7 +161,7 @@ async function getRegisteredEvents(id: string) {
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw 'could not find the requested user'; // if the data returned is null throw an error
+    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
     
     return requestedUser.attendEventArray;
 }
@@ -178,7 +178,7 @@ async function deleteUser(id: string) {
 
     let requestDeleteUser = await collections.users?.deleteOne({_id: parseId}); // deletes the requestedUser using id
 
-    if(requestDeleteUser?.deletedCount === 0) throw 'could not delete the requested user'; // if the data is not deleted will throw an error
+    if(requestDeleteUser?.deletedCount === 0) throw [400,'could not delete the requested user']; // if the data is not deleted will throw an error
 
     return {userDeleted: true};
 }
@@ -187,10 +187,10 @@ async function addHostedEvent(id: string, eventId: string) {
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
-
+   
     let addingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {hostEventArray: eventId}}); // finds the requestedUser using id
-
-    if(addingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+    
+    if(addingHostedEvent?.modifiedCount == 0) throw [400,'could not modify hostEventArray'];
 
     return {addedHostedEvent: true};
 }
@@ -202,7 +202,7 @@ async function addRegisteredEvent(id: string, eventId: string) {
 
     let addingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {attendEventArray: eventId}}); // finds the requestedUser using id
 
-    if(addingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+    if(addingRegisteredEvent?.modifiedCount == 0) throw [400,'could not modify attendEventArray'];
 
     return {addedRegisteredEvent: true};
 }
@@ -214,7 +214,7 @@ async function deleteHostedEvent(id: string, eventId: string) {
 
     let deletingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {hostEventArray: eventId}}); // finds the requestedUser using id
 
-    if(deletingHostedEvent?.modifiedCount == 0) throw 'could not modify hostEventArray';
+    if(deletingHostedEvent?.modifiedCount == 0) throw [400,'could not modify hostEventArray'];
 
     return {deletingHostedEvent: true};
 }
@@ -226,7 +226,7 @@ async function deleteRegisteredEvent(id: string, eventId: string) {
 
     let deletingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {attendEventArray: eventId}}); // finds the requestedUser using id
 
-    if(deletingRegisteredEvent?.modifiedCount == 0) throw 'could not modify attendEventArray';
+    if(deletingRegisteredEvent?.modifiedCount == 0) throw [400, 'could not modify attendEventArray'];
 
     return {deletingRegisteredEvent: true};
 }
