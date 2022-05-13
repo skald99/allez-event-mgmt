@@ -40,6 +40,11 @@ type newEventData = {
 
 }
 
+type EventImages = {
+    file: File
+    preview: string
+}
+
 export enum EventType {
     "NEW" = 0,
     "EDIT" = 1
@@ -110,235 +115,245 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
             clearSuggestions();
     }
 
-    const previewImgsFunc = () => {
-
+    const previewImgsFunc = (images: EventImages[]) => {
+        console.log(images);
     }
     
+    const showModal = () => {
+        setShowImageModal(true);
+    }
+
+    const hideModal = () => {
+        setShowImageModal(false);
+    }
+
     return(
-        <div className="my-2 mx-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="w-full">
-                    <form onSubmit={handleSubmit(onSubmit, onErrors)} autoComplete="off" className="bg-white shadow-md rounded px-8 pt-6 pb-8">
-                    <div className="mb-6">
-                            <div className="md:flex md:items-center">
-                                <div className="md:w-1/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Event Name: </label>
-                                </div>
-                                <div className="md:w-2/3">
-                                    <input className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.eventName ? 'border-red-600': ''}`} id="eventName" type="text" {...register("eventName", {required: {value: true, message: "Please enter a name for the event."}})}></input>
-                                </div>
-                            </div>
-                            <ErrorMessage errors={errors} name="eventName"
-                            render={({message}) => (
-                                <small className="text-red-400 mb-6">{message}</small>
-                                )}
-                            />
-                        </div>
-                        {   isLoaded && (
-                            <div className="mb-6">
+        <div>
+            <div className="my-2 mx-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="w-full">
+                        <form onSubmit={handleSubmit(onSubmit, onErrors)} autoComplete="off" className="bg-white shadow-md rounded px-8 pt-6 pb-8">
+                        <div className="mb-6">
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-1/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Venue: </label>
+                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Event Name: </label>
                                     </div>
                                     <div className="md:w-2/3">
-                                        <Controller 
-                                            name="venue"
-                                            control={control}
-                                            render={({field: {onChange, ref}}) => (
-                                                <Combobox
-                                                    ref={ref}
-                                                    data={renderSuggestions()}
-                                                    dataKey="id"
-                                                    textField="loc"
-                                                    onSelect={(val) => {
-                                                        handleSelect(val as Val);
-                                                        onChange((val as Val).loc);
-                                                    }}
-                                                    onChange={(val) => {
-                                                        setValue(val as string);
-                                                    }}
-                                                    hideEmptyPopup
-                                                    hideCaret />
-                                            )}
-                                            rules={{
-                                                required: "Please enter an address."
-                                            }}
-                                        />
+                                        <input className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.eventName ? 'border-red-600': ''}`} id="eventName" type="text" {...register("eventName", {required: {value: true, message: "Please enter a name for the event."}})}></input>
                                     </div>
                                 </div>
-                                <ErrorMessage errors={errors} name="venue"
+                                <ErrorMessage errors={errors} name="eventName"
                                 render={({message}) => (
                                     <small className="text-red-400 mb-6">{message}</small>
                                     )}
                                 />
                             </div>
-                            )
-                        }
-                        <div className={"mb-6"}>
-                            <div className="md:flex md:items-center">
-                                <div className="md:w-2/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="price">Registration Fee: </label>
-                                </div>
-                                <div className="md:w-1/3">
-                                    <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.price ? 'border-red-600': ''}`} 
-                                        id="price" type="number" min={0} {...register("price", {required: "Please enter a valid registration fee for the event, or enter 0 if free.", valueAsNumber: true })}/>
-                                </div>
-                            </div>
-                            <ErrorMessage errors={errors} name="price"
-                            render={({message}) => (
-                                <small className="text-red-400 mb-6">{message}</small>
-                                )}
-                            />
-                        </div>
-
-                        <div className="md:flex md:items-center mb-6">
-                            <div className="md:w-1/3">
-                                <label className="block text-gray-700 text-sm font-bold mb-5 md:text-left pr-4" htmlFor="description">Description: </label>
-                            </div>
-                            <div className="md:w-2/3">
-                                <textarea rows={6} className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.description ? 'border-red-600': ''}`} id="description" {...register("description", {required: "Please enter a description for the event."})}/>
-                                <br/>
-                                <small className="text-red-400">
-                                    {errors.description && errors.description.message}
-                                </small>
-                            </div>
-                        </div>
-
-                        <div className="mb-6">
-                            <div className="md:flex md:items-center">
-                                <div className="md:w-1/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="category">Category: </label>
-                                </div>
-                                <div className="md:w-2/3">
-                                    <Controller
-                                        control={control}
-                                        name="category"
-                                        render={({field: {onChange}}) => (
-                                            <Select
-                                                id="category"
-                                                className="focus: shadow-none"
-                                                options={[
-                                                    {value: "Career", label: "Career"},
-                                                    {value: "Music", label: "Music"},
-                                                    {value: "Food and Drink", label: "Food and Drink"},
-                                                    {value: "Charity", label: "Charity"},
-                                                    {value: "Exploration", label: "Exploration"},
-                                                    {value: "Entertainment", label: "Entertainment"},
-                                                    {value: "Night Life", label: "Night Life"},
-                                                    {value: "Other", label: "Other"}
-                                                ]}
-                                                onChange={(newVal: MultiValue<{value: string, label: string}>) => {
-                                                    onChange((newVal.map(e => e.value)))
+                            {   isLoaded && (
+                                <div className="mb-6">
+                                    <div className="md:flex md:items-center">
+                                        <div className="md:w-1/3">
+                                            <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Venue: </label>
+                                        </div>
+                                        <div className="md:w-2/3">
+                                            <Controller 
+                                                name="venue"
+                                                control={control}
+                                                render={({field: {onChange, ref}}) => (
+                                                    <Combobox
+                                                        ref={ref}
+                                                        data={renderSuggestions()}
+                                                        dataKey="id"
+                                                        textField="loc"
+                                                        onSelect={(val) => {
+                                                            handleSelect(val as Val);
+                                                            onChange((val as Val).loc);
+                                                        }}
+                                                        onChange={(val) => {
+                                                            setValue(val as string);
+                                                        }}
+                                                        hideEmptyPopup
+                                                        hideCaret />
+                                                )}
+                                                rules={{
+                                                    required: "Please enter an address."
                                                 }}
-                                                isMulti
-                                                />
+                                            />
+                                        </div>
+                                    </div>
+                                    <ErrorMessage errors={errors} name="venue"
+                                    render={({message}) => (
+                                        <small className="text-red-400 mb-6">{message}</small>
                                         )}
-                                        rules={{
-                                            required: "Please select a category."
-                                        }}/>
-                                </div>
-                            </div>
-                            <ErrorMessage errors={errors} name="category"
-                            render={({message}) => (
-                                <small className="text-red-400 mb-6">{message}</small>
-                                )}
-                            />
-                        </div>
-                        <br/>
-                        
-                        <div className={"mb-6"}>
-                            <div className="md:flex md:items-center">
-                                <div className="md:w-2/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="totalSeats">Total Seats: </label>
-                                </div>
-                                <div className="md:w-1/3">
-                                    <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.totalSeats ? 'border-red-600': ''}`} 
-                                        id="totalSeats" type="number" min={0} {...register("totalSeats", {required: "Please enter a valid number for the total seats", valueAsNumber: true })}/>
-                                </div>
-                            </div>
-                            <ErrorMessage errors={errors} name="totalSeats"
-                            render={({message}) => (
-                                <small className="text-red-400 mb-6">{message}</small>
-                                )}
-                            />
-                        </div>
-
-                        <br/>
-                        <div className={"mb-6"}>
-                            <div className="md:flex md:items-center">
-                                <div className="md:w-2/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="minAge">Minimum Age: </label>
-                                </div>
-                                <div className="md:w-1/3">
-                                    <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.minAge ? 'border-red-600': ''}`} 
-                                        id="minAge" type="number" min={0} {...register("minAge", {required: "Please enter a valid registration fee for the event, or enter 0 if free.", valueAsNumber: true })}/>
-                                </div>
-                            </div>
-                            <ErrorMessage errors={errors} name="minAge"
-                            render={({message}) => (
-                                <small className="text-red-400 mb-6">{message}</small>
-                                )}
-                            />
-                        </div>
-                        <br/>
-                        <div className="grid grid-cols-2 mb-6">
-                            <div>
-                                <label htmlFor="eventTimeStamp" className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4">Event Date: 
-                                <Controller
-                                    control={control}
-                                    name="eventTimeStamp"
-                                    render={({ field: {onChange, value, ref} }) => (
-                                    <DatePicker
-                                        ref={ref}
-                                        placeholderText="Select date"
-                                        onChange={(selected: Date) => {
-                                            onChange(selected)
-                                            setSelectedDate(selected);
-                                            return selected;
-                                        }}
-                                        selected={selectedDate}
-                                        value={value}
-                                        dateFormat="MM/dd/yyyy"
-                                        minDate={addDays(new Date(), 1)}
-                                        fixedHeight
-                                        className="mt-2 shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start"
-                                        
                                     />
+                                </div>
+                                )
+                            }
+                            <div className={"mb-6"}>
+                                <div className="md:flex md:items-center">
+                                    <div className="md:w-2/3">
+                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="price">Registration Fee: </label>
+                                    </div>
+                                    <div className="md:w-1/3">
+                                        <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.price ? 'border-red-600': ''}`} 
+                                            id="price" type="number" min={0} {...register("price", {required: "Please enter a valid registration fee for the event, or enter 0 if free.", valueAsNumber: true })}/>
+                                    </div>
+                                </div>
+                                <ErrorMessage errors={errors} name="price"
+                                render={({message}) => (
+                                    <small className="text-red-400 mb-6">{message}</small>
                                     )}
                                 />
-                                </label>
                             </div>
-                            <div className="mx-4 mt-9">
-                                <label htmlFor="active" className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="active" value={""} className="sr-only peer" {...register("active")}/>
-                                    <div className="h-6 bg-gray-200 border-2 border-gray-200 rounded-full w-11 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:h-5 after:w-5 after:shadow-sm after:rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600 peer-checked:border-blue-600 after:transition-all after:duration-300"></div>
-                                    <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Active</span>
-                                </label>
+
+                            <div className="md:flex md:items-center mb-6">
+                                <div className="md:w-1/3">
+                                    <label className="block text-gray-700 text-sm font-bold mb-5 md:text-left pr-4" htmlFor="description">Description: </label>
+                                </div>
+                                <div className="md:w-2/3">
+                                    <textarea rows={6} className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.description ? 'border-red-600': ''}`} id="description" {...register("description", {required: "Please enter a description for the event."})}/>
+                                    <br/>
+                                    <small className="text-red-400">
+                                        {errors.description && errors.description.message}
+                                    </small>
+                                </div>
                             </div>
-                        </div>
-                        <br/>
-                        <div className="grid grid-cols-2 gap-5">
-                            <div>
-                                <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" data-modal-toggle="imageModal">
-                                    Upload Images
-                                </button>
+
+                            <div className="mb-6">
+                                <div className="md:flex md:items-center">
+                                    <div className="md:w-1/3">
+                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="category">Category: </label>
+                                    </div>
+                                    <div className="md:w-2/3">
+                                        <Controller
+                                            control={control}
+                                            name="category"
+                                            render={({field: {onChange}}) => (
+                                                <Select
+                                                    id="category"
+                                                    className="focus: shadow-none"
+                                                    options={[
+                                                        {value: "Career", label: "Career"},
+                                                        {value: "Music", label: "Music"},
+                                                        {value: "Food and Drink", label: "Food and Drink"},
+                                                        {value: "Charity", label: "Charity"},
+                                                        {value: "Exploration", label: "Exploration"},
+                                                        {value: "Entertainment", label: "Entertainment"},
+                                                        {value: "Night Life", label: "Night Life"},
+                                                        {value: "Other", label: "Other"}
+                                                    ]}
+                                                    onChange={(newVal: MultiValue<{value: string, label: string}>) => {
+                                                        onChange((newVal.map(e => e.value)))
+                                                    }}
+                                                    isMulti
+                                                    />
+                                            )}
+                                            rules={{
+                                                required: "Please select a category."
+                                            }}/>
+                                    </div>
+                                </div>
+                                <ErrorMessage errors={errors} name="category"
+                                render={({message}) => (
+                                    <small className="text-red-400 mb-6">{message}</small>
+                                    )}
+                                />
+                            </div>
+                            <br/>
                             
+                            <div className={"mb-6"}>
+                                <div className="md:flex md:items-center">
+                                    <div className="md:w-2/3">
+                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="totalSeats">Total Seats: </label>
+                                    </div>
+                                    <div className="md:w-1/3">
+                                        <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.totalSeats ? 'border-red-600': ''}`} 
+                                            id="totalSeats" type="number" min={0} {...register("totalSeats", {required: "Please enter a valid number for the total seats", valueAsNumber: true })}/>
+                                    </div>
+                                </div>
+                                <ErrorMessage errors={errors} name="totalSeats"
+                                render={({message}) => (
+                                    <small className="text-red-400 mb-6">{message}</small>
+                                    )}
+                                />
                             </div>
-                            <div>
-                                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded focus:outline-none focus:shadow-outline" type="submit">
-                                    Add Event
-                                </button>
+
+                            <br/>
+                            <div className={"mb-6"}>
+                                <div className="md:flex md:items-center">
+                                    <div className="md:w-2/3">
+                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="minAge">Minimum Age: </label>
+                                    </div>
+                                    <div className="md:w-1/3">
+                                        <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.minAge ? 'border-red-600': ''}`} 
+                                            id="minAge" type="number" min={0} {...register("minAge", {required: "Please enter a valid registration fee for the event, or enter 0 if free.", valueAsNumber: true })}/>
+                                    </div>
+                                </div>
+                                <ErrorMessage errors={errors} name="minAge"
+                                render={({message}) => (
+                                    <small className="text-red-400 mb-6">{message}</small>
+                                    )}
+                                />
                             </div>
-                        </div>
-                    </form>
-                </div>
-                <div>
-                    {isLoaded ? <Map venue = {venue} placeId = {placeId}/> : <div className="w-full h-screen animate-spin"></div>}
+                            <br/>
+                            <div className="grid grid-cols-2 mb-6">
+                                <div>
+                                    <label htmlFor="eventTimeStamp" className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4">Event Date: 
+                                    <Controller
+                                        control={control}
+                                        name="eventTimeStamp"
+                                        render={({ field: {onChange, value, ref} }) => (
+                                        <DatePicker
+                                            ref={ref}
+                                            placeholderText="Select date"
+                                            onChange={(selected: Date) => {
+                                                onChange(selected)
+                                                setSelectedDate(selected);
+                                                return selected;
+                                            }}
+                                            selected={selectedDate}
+                                            value={value}
+                                            dateFormat="MM/dd/yyyy"
+                                            minDate={addDays(new Date(), 1)}
+                                            fixedHeight
+                                            className="mt-2 shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start"
+                                            
+                                        />
+                                        )}
+                                    />
+                                    </label>
+                                </div>
+                                <div className="mx-4 mt-9">
+                                    <label htmlFor="active" className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="active" value={""} className="sr-only peer" {...register("active")}/>
+                                        <div className="h-6 bg-gray-200 border-2 border-gray-200 rounded-full w-11 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:h-5 after:w-5 after:shadow-sm after:rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600 peer-checked:border-blue-600 after:transition-all after:duration-300"></div>
+                                        <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Active</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <br/>
+                            <div className="grid grid-cols-2 gap-5">
+                                <div>
+                                    <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={showModal}>
+                                        Upload Images
+                                    </button>
+                                
+                                </div>
+                                <div>
+                                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded focus:outline-none focus:shadow-outline" type="submit">
+                                        Add Event
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div>
+                        {isLoaded ? <Map venue = {venue} placeId = {placeId}/> : <div className="w-full h-screen animate-spin"></div>}
+                    </div>
                 </div>
             </div>
-            <div id="imageModal" tabIndex={-1} aria-hidden="true" className="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full">
-                <div className="relative p-4 w-full max-w-4xl h-full md:h-auto">
-                    <ImageModal previewImgs={previewImgsFunc}/>
+            <div id="imageModal" tabIndex={-1} className={`overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full ${!showImageModal && "hidden" }`}>
+                <div className="p-4 w-full max-w-4xl h-full m-auto">
+                    <ImageModal previewImgs={previewImgsFunc} hideModal={hideModal}/>
                 </div>
 
             </div>
