@@ -51,8 +51,12 @@ router.post("/login", async(req, res) => {
             // const query = await querySnapshot.docs[0].where("password", "==", password);
             // if(query != "") req.session.userId = query.userId;
             // else throw `Either email or password are invalid.`;
+
+            let getUserDetails = await usersData.getUser(querySnapshot.docs[0].data().userId);
             
             req.session.userId = querySnapshot.docs[0].data().userId;
+            req.session.userName = getUserDetails.name;
+            
         }else throw `Either email or password are invalid.`;
 
         res.status(200).json({ "success": true, "result": "successful in login" });
@@ -115,6 +119,8 @@ router.put("/", async(req, res) => {
 
         let updatedUser = await usersData.modifyUser(newUser);
         console.log(updatedUser);
+
+        req.session.userName = updatedUser.name;
 
         // changing email in firebase too
         const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", req.session.userId).get();

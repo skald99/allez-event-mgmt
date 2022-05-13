@@ -33,8 +33,7 @@ interface EventPrice {
     product: string,
     currency: string,
     unit_amount: number,
-    billing_scheme: Stripe.Price.BillingScheme,
-    type: Stripe.Price.Type
+    billing_scheme: Stripe.Price.BillingScheme
 }
 
 interface Address {
@@ -118,9 +117,8 @@ async function addEventRegFee(eventID: string, price: number) {
         let eventFee: EventPrice = {
             product: eventID,
             currency: "usd",
-            unit_amount: price,
+            unit_amount: price*100,
             billing_scheme: "per_unit",
-            type: "one_time"
         }
 
         let newFee = await stripe.prices.create(eventFee)
