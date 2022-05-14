@@ -1,14 +1,15 @@
 import * as mongoDB from "mongodb";
-import 'dotenv/config';
-const {MONGO_URL, DB_NAME} = process.env;
+const config = process.env;
 
 let _connection: mongoDB.MongoClient, _db: mongoDB.Db;
+
+
 
 export async function connectDB() {
     if(!_connection) {
         // const clientDB = new mongoDB.MongoClient(MONGO_URL!);
-        _connection = await mongoDB.MongoClient.connect(MONGO_URL!);
-        _db = _connection.db(DB_NAME);
+        _connection = await mongoDB.MongoClient.connect(config.MONGO_URL!);
+        _db = _connection.db(config.DB_NAME);
     }
     return _db;   
 }
