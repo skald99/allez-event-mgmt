@@ -8,7 +8,7 @@ import configRoutes from "./routes";
 import xss from "xss";
 
 const app = express();
-app.use(cors())
+app.use(cors({credentials: true}))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({credentials: true}));
@@ -27,17 +27,17 @@ app.use("*", (req, res, next) => {
     next();
 });
 
-let regex = "^\/users(\/login)?(\/)?$";
+let regex = "^\/users(\/login|\/signup)?(\/)?$";
 let shouldAuthenticate = true;
 app.post(regex, (req, res, next) => {
     if(req.session.userId)
-        res.status(401).json({ "success": false, "result": 'user is already logged in.'});
+        return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
     shouldAuthenticate = false;
     next();
 });
 app.use('*', (req, res, next) => {
     if(shouldAuthenticate && !req.session.userId)
-        res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+        return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
     next();
 });
 app.use('*', (req, res, next) => {
