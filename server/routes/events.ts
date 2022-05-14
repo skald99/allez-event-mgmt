@@ -1,4 +1,5 @@
 import express, { query } from 'express';
+
 import multer, { FileFilterCallback } from "multer"
 import { Request, Response } from 'express';
 import { Event } from '../models/events.model';
@@ -16,19 +17,6 @@ const usersData = data.usersData;
 const config = process.env
 export default router;
 const xss = require('xss');
-
-
-
-//create
-//delete
-//getall
-//getbyid
-//getbycatgory
-//getbyhost
-//getbycity
-//getbystate
-//addAttendee
-//unregister
 
 type DestinationCallback = (error: Error | null, destination: string) => void
 type FileNameCallback = (error: Error | null, filename: string) => void
@@ -63,7 +51,7 @@ router.post('/create', upload.any(), async (req, res) => {
     // console.log(obj)
     try {
         if (req.session.userId) {
-            validateEvent(obj)
+            obj = validateEvent(obj)
             obj.hostId = xss(req.session.userId);
             let addEvent = await eventsData.createEvent(obj)
             let addEventInUserCollection = await usersData.addHostedEvent(xss(req.session.userId), xss(addEvent._id.toString()));
@@ -99,10 +87,18 @@ router.get('/event', async (req, res) => {
 
     if (req.query.eventId?.toString().trim() || req.query.hostId?.toString().trim()) {
         try {
-           
+            
             let obj = req.query;
             obj.eventId = xss(obj.eventId?.toString().trim())
             obj.hostId = xss(obj.hostId?.toString().trim())
+            //
+            // if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
+            if(obj.eventId){
+                if(!ObjectId.isValid(obj.eventId.toString())) throw [400, "Event ID Is Invalid"]
+            }
+            if(obj.hostId){
+                if(!ObjectId.isValid(obj.hostId.toString())) throw [400, "Host ID Is Invalid"]
+            }
             let getById = await eventsData.getbyId(obj)
             res.status(200).json({ "success": true, "result": getById})
         }
@@ -127,8 +123,10 @@ router.get('/free', async (req, res) => {
 
 router.post('/event/:eventid/register', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim()) throw [400, 'Data Not In Right Format']
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+
+        if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']
+
         let eventId = xss(req.params.eventid.trim())
 
         if (req.session.userId) {
@@ -148,9 +146,9 @@ router.post('/event/:eventid/register', async function (req, res) {
 
 router.post('/event/:eventid/unregister', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim()) throw [400, 'Data Not In Right Format']
-        let eventId = xss(req.params.eventid)
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']
+        let eventId = xss(req.params.eventid.trim())
 
         if (req.session.userId) {
             let newUserid = xss(req.session.userId)
@@ -172,9 +170,10 @@ router.post('/event/:eventid/unregister', async function (req, res) {
 
 router.post('/event/:eventid/addcohost/:userid', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.userid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim() || !req.params.userid.trim()) throw [400, 'Data Not In Right Format']
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if(!ObjectId.isValid(req.params.userid.toString())) throw [400, "User ID Is Invalid"]
+
+        if (!req.params.eventid.trim() || !req.params.userid.trim()) throw [400, 'Event ID Or User ID Might Be Empty Strings']
         let eventId = xss(req.params.eventid.trim())
         let newUserid = xss(req.params.userid.trim());
 
@@ -206,8 +205,8 @@ router.post('/event/:eventid/addcohost/:userid', async function (req, res) {
 
 router.post('/event/:eventid/modify', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim()) throw [400, 'Data Not In Right Format']
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']
         let eventId = xss(req.params.eventid.trim())
 
         if (req.session.userId) {
@@ -234,9 +233,9 @@ router.post('/event/:eventid/modify', async function (req, res) {
 
 router.post('/event/:eventid/removecohost/:userid', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.userid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim() || !req.params.userid.trim()) throw [400, 'Data Not In Right Format']
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if(!ObjectId.isValid(req.params.userid.toString())) throw [400, "Event ID Is Invalid"]
+        if (!req.params.eventid.trim() || !req.params.userid.trim()) throw [400, 'Event ID Or User ID Might Be Empty Strings']
         let eventId = xss(req.params.eventid.trim());
         let newUserid = xss(req.params.userid.trim());
 
@@ -261,8 +260,8 @@ router.post('/event/:eventid/removecohost/:userid', async function (req, res) {
 
 router.delete('/event/:eventid', async function (req, res) {
     try {
-        if (!/[0-9A-Fa-f]{24}/.test(req.params.eventid.trim())) throw "Provided id is not a valid ObjectId";
-        if (!req.params.eventid.trim()) throw [400, 'Data Not In Right Format']
+        if(!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty Strings']
         let eventId = xss(req.params.eventid.trim());
 
         if (req.session.userId) {
@@ -296,21 +295,31 @@ router.delete('/event/:eventid', async function (req, res) {
 });
 
 function validateEvent(obj: Event) {
-    if (!obj.name.trim() || !obj.venue.address.trim() || !obj.venue.city.trim() || !obj.venue.state.trim() || !obj.venue.zip.trim()) throw [400, "Data Not In Right Format"]
-    if (isNaN(Number(obj.totalSeats)) || isNaN(Number(obj.minAge)) || isNaN(Number(obj.venue.geoLocation.lat)) || isNaN(Number(obj.venue.geoLocation.long))) throw [400, "Data Not In Correct Format"]
-    if (!isNaN(Number(obj.venue.address)) || !isNaN(Number(obj.venue.city)) || !isNaN(Number(obj.venue.state))) throw [400, "Data Not In Correct Format"]
+    if(typeof(obj.name)!='string' || typeof(obj.venue.address)!='string' || typeof(obj.venue.city)!='string'||
+    typeof(obj.venue.state)!='string' || typeof(obj.venue.zip)!='string' || typeof(obj.venue.city)!='string'
+    ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
+
+    if (!obj.name.trim() || !obj.venue.address.trim() || !obj.venue.city.trim() || !obj.venue.state.trim() || 
+    !obj.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
+
+    if (isNaN(Number(obj.totalSeats)) || isNaN(Number(obj.minAge)) || isNaN(Number(obj.venue.geoLocation.lat)) ||
+     isNaN(Number(obj.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+
+    if (!isNaN(Number(obj.venue.address)) || !isNaN(Number(obj.venue.city)) || 
+    !isNaN(Number(obj.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
+    
     obj.name = xss(obj.name.trim())
     obj.price = xss(obj.price)
     obj.description = xss(obj.description.trim())
-    obj.totalSeats = xss(obj.totalSeats)
-    obj.bookedSeats = xss(obj.bookedSeats)
-    obj.minAge = xss(obj.minAge)
+    obj.totalSeats = xss(Number(obj.totalSeats))
+    obj.bookedSeats = xss(Number(obj.bookedSeats))
+    obj.minAge = xss(Number(obj.minAge))
     obj.venue.address = xss(obj.venue.address.trim())
     obj.venue.city = xss(obj.venue.city.trim())
     obj.venue.state = xss(obj.venue.state.trim())
     obj.venue.zip = xss(obj.venue.zip.trim())
-    obj.venue.geoLocation.lat = xss(obj.venue.geoLocation.lat)
-    obj.venue.geoLocation.long = xss(obj.venue.geoLocation.long)
+    obj.venue.geoLocation.lat = xss(Number(obj.venue.geoLocation.lat))
+    obj.venue.geoLocation.long = xss(Number(obj.venue.geoLocation.long))
     obj.eventTimeStamp = xss(obj.eventTimeStamp);
-    return
+    return obj;
 }

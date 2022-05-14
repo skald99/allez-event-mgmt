@@ -14,10 +14,21 @@ const config = process.env
 
 
 async function createEvent(eventDetails: Event) {
-    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || !eventDetails.venue.zip.trim()) throw [400, "Data Not In Right Format"]
-    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) || isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Data Not In Correct Format"]
-    if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || !isNaN(Number(eventDetails.venue.state))) throw [400, "Data Not In Correct Format"]
 
+
+
+    if(typeof(eventDetails.name)!='string' || typeof(eventDetails.venue.address)!='string' || typeof(eventDetails.venue.city)!='string'||
+    typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
+    ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
+
+    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || 
+    !eventDetails.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
+
+    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
+     isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+
+    if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || 
+    !isNaN(Number(eventDetails.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
 
     let newEvent: Event = {
         "eventImgs": eventDetails.eventImgs,
@@ -44,7 +55,7 @@ async function createEvent(eventDetails: Event) {
     let created = await collections.events?.insertOne(newEvent);
     let insertedEvent = await collections.events?.findOne({ _id: created?.insertedId });
     if (insertedEvent) insertedEvent._id = insertedEvent._id.toString();
-    else throw "Event is not inserted properly";
+    else throw [500, "Event is not inserted properly"];
     let addEvent = await paymentsData.addEvent(insertedEvent)
     if (addEvent) {
         let addPrice = await paymentsData.addEventRegFee(insertedEvent._id, Number(eventDetails.price))
@@ -54,30 +65,42 @@ async function createEvent(eventDetails: Event) {
 }
 
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event) {
-    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || !eventDetails.venue.zip.trim()) throw [400, "Data Not In Right Format"]
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) || isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Data Not In Correct Format"]
-    if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || !isNaN(Number(eventDetails.venue.state))) throw [400, "Data Not In Correct Format"]
 
+    if(typeof(eventDetails.name)!='string' || typeof(eventDetails.venue.address)!='string' || typeof(eventDetails.venue.city)!='string'||
+    typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
+    ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
+
+    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || 
+    !eventDetails.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
+
+    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
+     isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+
+    if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || 
+    !isNaN(Number(eventDetails.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
+
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+
+    
     eventId = new ObjectId(eventId.toString().trim())
     let newEvent: Event = {
         "eventImgs": eventDetails.eventImgs,
-        "name": eventDetails.name,
+        "name": eventDetails.name.trim(),
         "category": eventDetails.category,
-        "price": eventDetails.price,
-        "description": eventDetails.description,
-        "totalSeats": eventDetails.totalSeats,
-        "bookedSeats": eventDetails.bookedSeats,
-        "minAge": eventDetails.minAge,
+        "price": Number(eventDetails.price),
+        "description": eventDetails.description.trim(),
+        "totalSeats": Number(eventDetails.totalSeats),
+        "bookedSeats": Number(eventDetails.bookedSeats),
+        "minAge": Number(eventDetails.minAge),
         "hostId": eventDetails.hostId,
         "cohostArr": eventDetails.cohostArr,
         "attendeesArr": eventDetails.attendeesArr,
         "venue": {
-            "address": eventDetails.venue.address,
-            "city": eventDetails.venue.city,
-            "state": eventDetails.venue.state,
-            "zip": eventDetails.venue.zip,
-            "geoLocation": { lat: eventDetails.venue.geoLocation.lat, long: eventDetails.venue.geoLocation.long }
+            "address": eventDetails.venue.address.trim(),
+            "city": eventDetails.venue.city.trim(),
+            "state": eventDetails.venue.state.trim(),
+            "zip": eventDetails.venue.zip.trim(),
+            "geoLocation": { lat: Number(eventDetails.venue.geoLocation.lat), long: Number(eventDetails.venue.geoLocation.long) }
         },
         "eventTimeStamp": eventDetails.eventTimeStamp
     }
@@ -90,17 +113,17 @@ async function modifyEvent(eventId: string | ObjectId, eventDetails: Event) {
 }
 
 async function deleteEvent(eventId: string | ObjectId) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+
     eventId = new ObjectID(eventId.toString().trim())
     await events()
     let removingEvent = await collections.events?.findOne({ _id: eventId });
-    console.log(removingEvent)
     if (removingEvent) removingEvent._id = removingEvent._id.toString();
-    else throw [400, "There is no event with the requested id"];
+    else throw [404, "There is no event with the requested id"];
 
     let deletedEvent = await collections.events?.deleteOne({ _id: eventId })
     if (deletedEvent?.deletedCount === 0) {
-        throw [400, "Could Not Delete Event"]
+        throw [500, "Could Not Delete Event"]
     }
     return removingEvent
 }
@@ -109,7 +132,7 @@ async function getAllEvents() {
     await events();
     let requestedEvent = await collections.events?.find().toArray();
     if (requestedEvent?.length === 0) {
-        throw [400, "No Events Found"]
+        throw [404, "No Events Found"]
     }
 
     for (let event of requestedEvent!) {
@@ -128,7 +151,7 @@ async function getFreeEvents() {
     await events();
     let freeEvents = await collections.events?.find({ price: 0 }).toArray();
     if (freeEvents?.length === 0) {
-        throw [400, "No Free Events"]
+        throw [404, "No Free Events"]
     }
     for (let event of freeEvents!) {
         let imageUrls: string[] = []
@@ -142,21 +165,21 @@ async function getFreeEvents() {
 
 }
 async function addCohost(eventId: string | ObjectId, userId: string) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if (!/[0-9A-Fa-f]{24}/.test(userId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let cohostUpdated = await collections.events?.updateOne({ _id: eventId }, { $addToSet: { cohostArr: userId.toString().trim() } });
     console.log(cohostUpdated)
     if (cohostUpdated?.modifiedCount === 0) {
-        throw [400, "Cannot Add Co Host"]
+        throw [500, "Cannot Add Co Host"]
     }
     return cohostUpdated
 }
 
 async function addAttendee(eventId: string | ObjectId, userId: string) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if (!/[0-9A-Fa-f]{24}/.test(userId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let requestedEvent = await collections.events?.findOne({ _id: eventId })
@@ -185,12 +208,12 @@ async function addAttendee(eventId: string | ObjectId, userId: string) {
 }
 
 async function unRegister(eventId: string | ObjectId, userId: string) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if (!/[0-9A-Fa-f]{24}/.test(userId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let removeAttendee = await collections.events?.updateOne({ _id: eventId }, { $pull: { attendeesArr: userId.toString().trim() } })
-    if (removeAttendee?.modifiedCount === 0) throw [400, "User/Event Not Present"]
+    if (removeAttendee?.modifiedCount === 0) throw [404, "User/Event Not Present"]
     else {
         await collections.events?.updateOne({ _id: eventId }, { $inc: { bookedSeats: -1 } })
         return "Attendee unregistered successfully"
@@ -199,8 +222,8 @@ async function unRegister(eventId: string | ObjectId, userId: string) {
 
 
 async function removeCohost(eventId: string | ObjectId, userId: string) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if (!/[0-9A-Fa-f]{24}/.test(userId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let remCohost = await collections.events?.updateOne({ _id: eventId }, { $pull: { cohostArr: userId.toString().trim() } })
@@ -216,8 +239,8 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
 
     await events();
     if (ids.eventId && ids.hostId) {
-        if (!/[0-9A-Fa-f]{24}/.test(ids.eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
-        if (!/[0-9A-Fa-f]{24}/.test(ids.hostId.toString().trim())) throw "Provided id is not a valid ObjectId";
+        if(!ObjectId.isValid(ids.eventId.toString())) throw [400, "Event ID Is Invalid"]
+        if(!ObjectId.isValid(ids.hostId.toString())) throw [400, "Host ID Is Invalid"]
         let neweventId = new ObjectId(ids.eventId.toString().trim())
         let newhostId = ids.hostId.toString().trim();
         let requestedEvent = await collections.events?.findOne({ _id: neweventId, hostId: newhostId });
@@ -234,7 +257,8 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
     }
     else if (ids.eventId) {
         let imageUrls: string[] = []
-        if (!/[0-9A-Fa-f]{24}/.test(ids.eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+        if(!ObjectId.isValid(ids.eventId.toString())) throw [400, "Event ID Is Invalid"]
+
         let neweventId = new ObjectId(ids.eventId.toString().trim())
         let requestedEvent = await collections.events?.findOne({ _id: neweventId });
         requestedEvent!._id = requestedEvent!._id.toString()
@@ -248,7 +272,7 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
         return requestedEvent
     }
     else if (ids.hostId) {
-        if (!/[0-9A-Fa-f]{24}/.test(ids.hostId.toString().trim())) throw "Provided id is not a valid ObjectId";
+        if(!ObjectId.isValid(ids.hostId.toString())) throw [400, "Host ID Is Invalid"]
         let newhostId = ids.hostId.toString().trim();
         let requestedEvent = await collections.events?.find({ hostId: newhostId }).toArray();
         if (requestedEvent?.length === 0) {
@@ -265,15 +289,15 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
         return requestedEvent;
     }
     else {
-    } throw [400, 'No Events Based On This Filter']
+    } throw [404, 'No Events Based On This Filter']
 
 }
-async function getList(eventId: string) {
-    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+async function getAttendees(eventId: string) {
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
     await events();
     let neweventId = new ObjectId(eventId.toString().trim())
     let requestedEvent = await collections.events?.findOne({ _id: neweventId });
-    if (requestedEvent === null) throw [400, 'Event Not Found']
+    if (requestedEvent === null) throw [404, 'Event Not Found']
     let arr = requestedEvent?.attendeesArr
     if (requestedEvent?.attendeesArr) {
         let finalDetails = []
@@ -286,6 +310,9 @@ async function getList(eventId: string) {
             finalDetails.push(detailObj)
         }
         return finalDetails
+    }
+    else{
+        return 'No Attendees'
     }
 }
 
@@ -326,5 +353,5 @@ export default {
     addCohost,
     getbyId,
     removeCohost,
-    getList
+    getAttendees
 }
