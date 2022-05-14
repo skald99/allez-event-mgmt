@@ -6,6 +6,7 @@
 import * as admin from "firebase-admin/app";
 import * as keyAdmin from "firebase-admin";
 import * as firestore from "firebase-admin/firestore";
+import cors from "cors"
 
 
 const firebaseConfig = {
@@ -25,9 +26,13 @@ import express from 'express';
 import session from "express-session";
 const app = express();
 import configRoutes from "./routes";
-
+app.use(cors())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+    credentials: true,
+    // origin: "http://localhost:3000",
+  }));
 
 app.use(session({
     name: 'AuthCookie',

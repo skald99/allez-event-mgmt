@@ -8,11 +8,11 @@ type ImageDetails = {
 
 }
 
-const ImageModal = (props: { previewImgs: (files: ImageDetails[]) => void; hideModal: () => void}) => {
+const ImageModal = (props: { previewImgs: (files: File[]) => void; hideModal: () => void}) => {
 
     const [files, setFiles] = React.useState<ImageDetails[]>([]);
     
-    const {getRootProps, getInputProps, isDragReject} = useDropzone({
+    const {getRootProps, getInputProps, isDragReject, isDragActive, isDragAccept} = useDropzone({
         accept: {
             'image/*': []
         },
@@ -70,7 +70,7 @@ const ImageModal = (props: { previewImgs: (files: ImageDetails[]) => void; hideM
             </button>
             <div className="py-6 px-6 lg:px-8">
                 <h1 className="font-bold text-xl font-sans text-gray-600">Upload your Images</h1>
-                <div {...getRootProps({className: "h-40 border border-blue-300 mt-6 w-full"})}>
+                <div {...getRootProps({className: `h-40 border-2 ${isDragActive && "border-blue-300"} mt-6 w-full ${isDragReject && "border-red-400"} ${isDragAccept && "border-green-300"}`})}>
                     <input {...getInputProps()} />
                     <p>Drag and drop your files, or click to select.</p>
                 </div>
@@ -84,7 +84,11 @@ const ImageModal = (props: { previewImgs: (files: ImageDetails[]) => void; hideM
                             </div>
                             <div>
                             <button type="button" className="bg-blue-500 mx-4 py-2 px-24 text-gray-100 font-sans mt-2 rounded-md align-bottom hover:bg-blue-700" onClick={() => {
-                                props.previewImgs(files);
+                                let images: File[] = [];
+                                files.forEach(file => {
+                                    images.push(file.file);
+                                })
+                                props.previewImgs(images);
                                 props.hideModal();
                             }}>Upload</button>
                             </div>
