@@ -1,19 +1,11 @@
 import { ObjectId } from "mongodb";
+
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
 import { User } from "../models/user.model";
 import bcrypt from "bcrypt";
 
-// type address = {
-//     city: string,
-//     state: string,
-//     zip: string
-// }
-
-
 const bcryptRounds: number = 10; // used for encrypting the password using bcrypt
-
-
 
 /**
  * This function is only for internal purpose
@@ -22,41 +14,20 @@ const bcryptRounds: number = 10; // used for encrypting the password using bcryp
  * @returns data of the requested user and also id is converted into string when returned
  */
 async function getUser(id : string) {
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
+    
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
+    if(requestedUser == null) throw [404,'could not find the requested user']; // if the data returned is null throw an error
     
     requestedUser._id = requestedUser._id.toString(); // convert the id format from ObjectId to String
     console.log(requestedUser);
     return requestedUser;
 }
-
-
-// /**
-//  * This function is used to check whether a person is passing correct credentials when the client is trying to login
-//  * @param email is of string type
-//  * @param password is of string type
-//  * takes the email and checks the password with the userData that contains this email
-//  * @returns whether the userLoggedIn is true or it will throw an error if the parameters are incorrect.
-//  */
-// async function checkUser(email: string, password: string) {
-//     await users(); // instantiating the mongoCollection
-
-//     let requestedUser = await collections.users?.findOne({email: email}); // finds the requestedUser using email
-
-//     if(requestedUser == null) throw 'either email or password is incorrect'; // if the data returned is null throw an error
-
-//     const checkPassword = await bcrypt.compare(password, requestedUser.password); // check the password using bcrypt
-
-//     if(checkPassword == false) throw 'either email or password is incorrect'; // if compared passwords are not equal throw an error
-//     console.log(requestedUser);
-//     return {"userLoggedIn" : true, "userId": requestedUser._id.toString()};
-// }
-
 
 /**
  * This method creates a user account and store it in database with the details provided
@@ -68,18 +39,18 @@ async function createUser(person : User) {
     typeof(person.address.city)!='string'||
     typeof(person.address.state)!='string'||
     typeof(person.address.postal_code)!='string'||
-    typeof(person.address.country)!='string') throw [400, "Data Not In Right Format"]
+    typeof(person.address.country)!='string') throw [400, "Registration Details Not In String Format"]
 
     if(!person.name.trim() || !person.gender.trim() || !person.email.trim()  || 
     !person.address.city.trim() || !person.address.state.trim() || !person.address.postal_code.trim() ||
-     !person.address.country.trim() ) throw [400, "Data Not In Right Format"]
+     !person.address.country.trim() ) throw [400, "Registration Details Might Be Empty Strings"]
 
-     if(isNaN(Number(person.phone)))throw [400, "Data Not In Right Format"]
+     if(isNaN(Number(person.phone)))throw [400, "Phone Number Is Not Number"]
 
      if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
-     !isNaN(Number(person.address.postal_code)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
+     !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
      !isNaN(Number(person.email))
-     ) throw [400, "Data Not In Correct Format"]                        
+     ) throw [400, "Any Detail Of The User Might Be A Number Which Require To Be A String"]                        
     let newUser : User = { // creating an object that can be inserted into database
         "name": person.name.trim(),
         "address": {
@@ -99,9 +70,9 @@ async function createUser(person : User) {
     await users(); // instantiating the mongoCollection
 
     let result = await collections.users?.insertOne(newUser); // inserting the object into the database along with a newly created user objectId
-    if(result?.acknowledged == false) throw [400,'could not register the user']; // if unable to store the details throw an error
+    if(result?.acknowledged == false) throw [500,'could not register the user']; // if unable to store the details throw an error
     let createUserData = await collections.users?.findOne({_id: result?.insertedId}); // finding the newly inserted object with the new userId
-    if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
+    if(createUserData == null) throw [404,'could not find the details of the registered user']; // if unable to find details of user throw an error
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     console.log(createUserData);
     return createUserData;
@@ -118,19 +89,20 @@ async function modifyUser(person : User) {
     typeof(person.address.city)!='string'||
     typeof(person.address.state)!='string'||
     typeof(person.address.postal_code)!='string'||
-    typeof(person.address.country)!='string') throw [400, "Data Not In Right Format"]
+    typeof(person.address.country)!='string') throw [400, "Updation Details Not In String Format"]
 
     if(!person.name.trim() || !person.gender.trim() || !person.email.trim()  || 
     !person.address.city.trim() || !person.address.state.trim() || !person.address.postal_code.trim() ||
-     !person.address.country.trim() ) throw [400, "Data Not In Right Format"]
+     !person.address.country.trim() ) throw [400, "Updation Details Might Be Empty Strings"]
 
-     if(isNaN(Number(person.phone)))throw [400, "Data Not In Right Format"]
+     if(isNaN(Number(person.phone)))throw [400, "Phone Number Is Not Number"]
 
      if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
-     !isNaN(Number(person.address.postal_code)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
+    !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
      !isNaN(Number(person.email))
-     ) throw [400, "Data Not In Correct Format"]
+     ) throw [400, "Any Detail Of The User Might Be A Number Which Require To Be A String"]
 
+    // ObjectId.isValid(person._id)
     let parseId = new ObjectId(person._id);
 
     let modifiedUser : User = {
@@ -152,9 +124,9 @@ async function modifyUser(person : User) {
     await users(); // instantiating the mongoCollection
 
     let result = await collections.users?.updateOne( {_id: parseId}, {$set: modifiedUser});
-    if(result?.modifiedCount === 0) throw [400,'could not modify the users details']; // if unable to update throw an error
+    if(result?.modifiedCount === 0) throw [500,'could not modify the users details']; // if unable to update throw an error
     let createUserData = await collections.users?.findOne({email: person.email}); // finding the newly inserted object with the new userId
-    if(createUserData == null) throw [400,'could not find the details of the registered user']; // if unable to find details of user throw an error
+    if(createUserData == null) throw [404,'could not find the details of the registered user']; // if unable to find details of user throw an error
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     return createUserData;
 }
@@ -165,14 +137,15 @@ async function modifyUser(person : User) {
  * @returns all the events that are hosted by the user
  */
 async function getHostedEvents(id : string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+   
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
+    if(requestedUser == null) throw [404,'could not find the requested user']; // if the data returned is null throw an error
     
     return requestedUser.hostEventArray;
 }
@@ -183,14 +156,15 @@ async function getHostedEvents(id : string) {
  * @returns all the events that user has registered
  */
 async function getRegisteredEvents(id: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
+    if(requestedUser == null) throw [404,'could not find the requested user']; // if the data returned is null throw an error
     
     return requestedUser.attendEventArray;
 }
@@ -201,70 +175,72 @@ async function getRegisteredEvents(id: string) {
  * @returns if the user is deleted or will throw an error
  */
 async function deleteUser(id: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let requestDeleteUser = await collections.users?.deleteOne({_id: parseId}); // deletes the requestedUser using id
 
-    if(requestDeleteUser?.deletedCount === 0) throw [400,'could not delete the requested user']; // if the data is not deleted will throw an error
+    if(requestDeleteUser?.deletedCount === 0) throw [500,'could not delete the requested user']; // if the data is not deleted will throw an error
 
     return {userDeleted: true};
 }
 
 async function addHostedEvent(id: string, eventId: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
+    if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
    
     let addingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {hostEventArray: eventId}}); // finds the requestedUser using id
     
-    if(addingHostedEvent?.modifiedCount == 0) throw [400,'could not modify hostEventArray'];
+    if(addingHostedEvent?.modifiedCount == 0) throw [500,'could not modify hostEventArray'];
 
     return {addedHostedEvent: true};
 }
 
 async function addRegisteredEvent(id: string, eventId: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
+    if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let addingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$addToSet: {attendEventArray: eventId}}); // finds the requestedUser using id
 
-    if(addingRegisteredEvent?.modifiedCount == 0) throw [400,'could not modify attendEventArray'];
+    if(addingRegisteredEvent?.modifiedCount == 0) throw [500,'could not modify attendEventArray'];
 
     return {addedRegisteredEvent: true};
 }
 
 async function deleteHostedEvent(id: string, eventId: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
+    if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let deletingHostedEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {hostEventArray: eventId}}); // finds the requestedUser using id
 
-    if(deletingHostedEvent?.modifiedCount == 0) throw [400,'could not modify hostEventArray'];
+    if(deletingHostedEvent?.modifiedCount == 0) throw [500,'could not modify hostEventArray'];
 
     return {deletingHostedEvent: true};
 }
 
 async function deleteRegisteredEvent(id: string, eventId: string) {
-    if(!/[0-9A-Fa-f]{24}/.test(id.toString().trim())) throw "Provided id is not a valid ObjectId";
-    if(!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+
+    if(!ObjectId.isValid(id)) throw [400, "User Id Is Invalid"]
+    if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
+    
     await users(); // instantiating the mongoCollection
 
     let parseId : ObjectId = new ObjectId(id); // converting the id from string to ObjectId
 
     let deletingRegisteredEvent = await collections.users?.updateOne({_id: parseId}, {$pull: {attendEventArray: eventId}}); // finds the requestedUser using id
 
-    if(deletingRegisteredEvent?.modifiedCount == 0) throw [400, 'could not modify attendEventArray'];
+    if(deletingRegisteredEvent?.modifiedCount == 0) throw [500, 'could not modify attendEventArray'];
 
     return {deletingRegisteredEvent: true};
 }

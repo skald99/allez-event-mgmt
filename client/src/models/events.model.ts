@@ -1,7 +1,7 @@
 
 type Event = {
-    _id : string,
-    eventImgs: [],
+    _id ?: string,
+    eventImgs: File[] | string[],
     name : string,
     category : string[],
     price: number,
@@ -9,10 +9,9 @@ type Event = {
     totalSeats: number,
     bookedSeats : number,
     minAge: number,
-    hostId : string,
-    // stripe_product_id: string,
-    cohostArr : [],
-    attendeesArr : [],
+    hostId ?: string,
+    cohostArr ?: [],
+    attendeesArr ?: [],
     venue: {
         address: string,
         city: string,

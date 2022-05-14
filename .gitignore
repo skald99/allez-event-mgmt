@@ -4,6 +4,7 @@
 /client/node_modules
 /server/node_modules
 /server/.env
+/server/task/seed.ts
 /.pnp
 .pnp.js
 package-lock.json
@@ -11,7 +12,6 @@ package-lock.json
 /server/package-lock.json
 # testing
 /coverage
-
 # production
 /build
 
@@ -25,3 +25,4 @@ package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-private-key.json
