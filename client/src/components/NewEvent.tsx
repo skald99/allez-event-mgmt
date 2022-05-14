@@ -7,43 +7,31 @@ import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import {useJsApiLoader} from "@react-google-maps/api";
 import { Combobox } from "react-widgets/cjs";
-import usePlacesAutocomplete from "use-places-autocomplete";
+import usePlacesAutocomplete, { getGeocode, getLatLng, getZipCode } from "use-places-autocomplete";
 
 import "react-datepicker/dist/react-datepicker.css";
 import "react-widgets/styles.css";
 import Map from "./Map";
 import ImageModal from "./ImageModal";
-
-type Address = {
-    address: string;
-    city: string;
-    state: string;
-    zip: string;
-    geoLocation: {lat: number, long: number};
-}
-
-type Val = {
-    id: string
-    loc: string
-}
+import Event from "../models/events.model";
+import axios from "axios";
 
 type newEventData = {
-    eventName: string;
+    name: string;
     price: number;
     description: string;
     totalSeats: number;
     minAge: number;
     active: boolean;
-    category: string;
+    category: string[];
     eventTimeStamp: string;
-    venue: Address;
+    venue: string;
 
 }
 
-type EventImages = {
-    file: File
-    preview: string
-}
+type LatLng = google.maps.LatLngLiteral;
+type GeocodeResult = google.maps.GeocoderResult[];
+
 
 export enum EventType {
     "NEW" = 0,
@@ -59,13 +47,42 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
     console.log(type)
     const [eventData, setEventData] = React.useState<newEventData|undefined>(undefined);
     const {register, handleSubmit, formState: {errors}, control} = useForm<newEventData>();
-    const onSubmit: SubmitHandler<newEventData> = data => setEventData(data);
+    
     const onErrors: SubmitErrorHandler<newEventData> = data => console.log(data);
     const [venue, setVenue] = React.useState<string>("");
-    const [placeId, setPlaceId] = React.useState<string>("");
     const [selectedDate, setSelectedDate] = React.useState<Date>();
     const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
+    const [eventImages, setEventImages] = React.useState<File[]>([]);
+    
+    const onSubmit: SubmitHandler<newEventData> = async data => {
+        let { zipCode, venueCoord } = await getGCAndZip(venue);
+        let eventVenue: string[] = venue.split(",");
+        let newEvent: Event = {
+            name: data.name,
+            category: data.category,
+            price: data.price,
+            description: data.description,
+            totalSeats: data.totalSeats,
+            bookedSeats: 0,
+            minAge: data.minAge || 0,
+            venue: {
+                address: eventVenue[0],
+                city: eventVenue[1],
+                state: eventVenue[2],
+                zip: zipCode,
+                geoLocation: {
+                    lat: venueCoord?.lat!,
+                    long: venueCoord?.lng!
+                }
+            },
+            eventTimeStamp: data.eventTimeStamp,
+            eventImgs: eventImages
+        }
 
+        let createdEvent = await axios.post("http://localhost:4000/events/create", newEvent);
+        
+        console.log(createdEvent);
+    };
     if(type) {
         
     }
@@ -77,7 +94,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
         
     })
 
-    const {ready, value, suggestions: {data, status}, setValue, clearSuggestions, init} = usePlacesAutocomplete({
+    const {suggestions: {data, status}, setValue, clearSuggestions, init} = usePlacesAutocomplete({
         initOnMount: false,
         requestOptions: {
             componentRestrictions: {
@@ -91,32 +108,46 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
         init();
     }
 
-    const renderSuggestions = (): Val[] => {
-        let dataList: Val[] = [];
+    
+
+    const renderSuggestions = (): string[] => {
+        let dataList: string[] = [];
         if(status === "OK") {
             data.forEach((suggestion) => {
-                const {place_id, description} = suggestion;
-                let option = {
-                    id: place_id,
-                    loc: description
-                }
-                dataList.push(option);
+                const {description} = suggestion;
+                dataList.push(description);
             });
         }
         return dataList;
 
     }
 
-    const handleSelect = (val: Val) => {
-        let {id, loc} = val;
-            setValue(loc, false);
-            setVenue(loc);
-            setPlaceId(id);
+    const handleSelect = (val: string) => {
+            setValue(val, false);
+            setVenue(val);
             clearSuggestions();
     }
 
-    const previewImgsFunc = (images: EventImages[]) => {
-        console.log(images);
+    const getGCAndZip = async (venue: string) => {
+        let geoCode: GeocodeResult = await getGeocode({
+            address: venue,
+            region: "us",
+            componentRestrictions: {
+                country: "us"
+            }
+        });
+
+        let newZip: string = "";
+        let newCoord: LatLng = getLatLng(geoCode[0]);
+        if(getZipCode(geoCode[0], false) !== null) {
+            newZip = getZipCode(geoCode[0], false) as string;
+        }
+
+        return {zipCode: newZip, venueCoord: newCoord}
+    }
+
+    const previewImgsFunc = (images: File[]) => {
+        setEventImages(images);
     }
     
     const showModal = () => {
@@ -129,22 +160,24 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
 
     return(
         <div>
-            <div className="my-2 mx-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="mx-4 my-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div className="w-full">
-                        <form onSubmit={handleSubmit(onSubmit, onErrors)} autoComplete="off" className="bg-white shadow-md rounded px-8 pt-6 pb-8">
+                        <form onSubmit={handleSubmit(onSubmit, onErrors)} autoComplete="off" className="px-8 pt-6 pb-8 bg-white rounded shadow-md">
                         <div className="mb-6">
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-1/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Event Name: </label>
+                                        <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="name">Event Name: </label>
                                     </div>
                                     <div className="md:w-2/3">
-                                        <input className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.eventName ? 'border-red-600': ''}`} id="eventName" type="text" {...register("eventName", {required: {value: true, message: "Please enter a name for the event."}})}></input>
+                                        <input className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.name ? 'border-red-600': ''}`} id="name" type="text" {...register("name", {required: {value: true, message: "Please enter a name for the event."}, validate: {
+                                            trim: eName => eName.trim().length > 0 || "Please enter a valid username"
+                                        }})}></input>
                                     </div>
                                 </div>
-                                <ErrorMessage errors={errors} name="eventName"
+                                <ErrorMessage errors={errors} name="name"
                                 render={({message}) => (
-                                    <small className="text-red-400 mb-6">{message}</small>
+                                    <small className="mb-6 text-red-400">{message}</small>
                                     )}
                                 />
                             </div>
@@ -152,7 +185,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                 <div className="mb-6">
                                     <div className="md:flex md:items-center">
                                         <div className="md:w-1/3">
-                                            <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="eventName">Venue: </label>
+                                            <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="venue">Venue: </label>
                                         </div>
                                         <div className="md:w-2/3">
                                             <Controller 
@@ -161,28 +194,36 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                                 render={({field: {onChange, ref}}) => (
                                                     <Combobox
                                                         ref={ref}
+                                                        className={`w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.venue ? 'border-red-600': ''}`}
                                                         data={renderSuggestions()}
                                                         dataKey="id"
                                                         textField="loc"
                                                         onSelect={(val) => {
-                                                            handleSelect(val as Val);
-                                                            onChange((val as Val).loc);
+                                                            handleSelect(val);
+                                                            onChange(val);
                                                         }}
                                                         onChange={(val) => {
-                                                            setValue(val as string);
+                                                            setValue(val);
+                                                            if(val === "" ) {
+                                                                onChange(val);
+                                                                setVenue("");
+                                                            }
                                                         }}
                                                         hideEmptyPopup
                                                         hideCaret />
                                                 )}
                                                 rules={{
-                                                    required: "Please enter an address."
+                                                    required: "Please enter a valid address.",
+                                                    validate: eVenue => {
+                                                        return eVenue && eVenue.trim().length > 0
+                                                    }  
                                                 }}
                                             />
                                         </div>
                                     </div>
                                     <ErrorMessage errors={errors} name="venue"
                                     render={({message}) => (
-                                        <small className="text-red-400 mb-6">{message}</small>
+                                        <small className="mb-6 text-red-400">{message}</small>
                                         )}
                                     />
                                 </div>
@@ -191,7 +232,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                             <div className={"mb-6"}>
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-2/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="price">Registration Fee: </label>
+                                        <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="price">Registration Fee: </label>
                                     </div>
                                     <div className="md:w-1/3">
                                         <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.price ? 'border-red-600': ''}`} 
@@ -200,17 +241,19 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                 </div>
                                 <ErrorMessage errors={errors} name="price"
                                 render={({message}) => (
-                                    <small className="text-red-400 mb-6">{message}</small>
+                                    <small className="mb-6 text-red-400">{message}</small>
                                     )}
                                 />
                             </div>
 
-                            <div className="md:flex md:items-center mb-6">
+                            <div className="mb-6 md:flex md:items-center">
                                 <div className="md:w-1/3">
-                                    <label className="block text-gray-700 text-sm font-bold mb-5 md:text-left pr-4" htmlFor="description">Description: </label>
+                                    <label className="block pr-4 mb-5 text-sm font-bold text-gray-700 md:text-left" htmlFor="description">Description: </label>
                                 </div>
                                 <div className="md:w-2/3">
-                                    <textarea rows={6} className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.description ? 'border-red-600': ''}`} id="description" {...register("description", {required: "Please enter a description for the event."})}/>
+                                    <textarea rows={6} className={`shadow appearance-none border-2 border-gray-200 w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline  ${errors.description ? 'border-red-600': ''}`} id="description" {...register("description", {required: "Please enter a description for the event.", validate: {
+                                        trim: eventDesc => eventDesc.trim().length > 0 || "Please enter a valid description"
+                                    }})}/>
                                     <br/>
                                     <small className="text-red-400">
                                         {errors.description && errors.description.message}
@@ -221,7 +264,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                             <div className="mb-6">
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-1/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="category">Category: </label>
+                                        <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="category">Category: </label>
                                     </div>
                                     <div className="md:w-2/3">
                                         <Controller
@@ -230,7 +273,6 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                             render={({field: {onChange}}) => (
                                                 <Select
                                                     id="category"
-                                                    className="focus: shadow-none"
                                                     options={[
                                                         {value: "Career", label: "Career"},
                                                         {value: "Music", label: "Music"},
@@ -254,7 +296,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                 </div>
                                 <ErrorMessage errors={errors} name="category"
                                 render={({message}) => (
-                                    <small className="text-red-400 mb-6">{message}</small>
+                                    <small className="mb-6 text-red-400">{message}</small>
                                     )}
                                 />
                             </div>
@@ -263,7 +305,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                             <div className={"mb-6"}>
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-2/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="totalSeats">Total Seats: </label>
+                                        <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="totalSeats">Total Seats: </label>
                                     </div>
                                     <div className="md:w-1/3">
                                         <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.totalSeats ? 'border-red-600': ''}`} 
@@ -272,7 +314,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                 </div>
                                 <ErrorMessage errors={errors} name="totalSeats"
                                 render={({message}) => (
-                                    <small className="text-red-400 mb-6">{message}</small>
+                                    <small className="mb-6 text-red-400">{message}</small>
                                     )}
                                 />
                             </div>
@@ -281,46 +323,58 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                             <div className={"mb-6"}>
                                 <div className="md:flex md:items-center">
                                     <div className="md:w-2/3">
-                                        <label className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4" htmlFor="minAge">Minimum Age: </label>
+                                        <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="minAge">Minimum Age: </label>
                                     </div>
                                     <div className="md:w-1/3">
                                         <input className={`shadow border-2 border-gray-200 w-full focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.minAge ? 'border-red-600': ''}`} 
-                                            id="minAge" type="number" min={0} {...register("minAge", {required: "Please enter a valid registration fee for the event, or enter 0 if free.", valueAsNumber: true })}/>
+                                            id="minAge" type="number" min={0} {...register("minAge", {valueAsNumber: true })}/>
                                     </div>
                                 </div>
                                 <ErrorMessage errors={errors} name="minAge"
                                 render={({message}) => (
-                                    <small className="text-red-400 mb-6">{message}</small>
+                                    <small className="mb-6 text-red-400">{message}</small>
                                     )}
                                 />
                             </div>
                             <br/>
                             <div className="grid grid-cols-2 mb-6">
                                 <div>
-                                    <label htmlFor="eventTimeStamp" className="block text-gray-700 text-sm font-bold mb-0 md:text-left pr-4">Event Date: 
-                                    <Controller
-                                        control={control}
-                                        name="eventTimeStamp"
-                                        render={({ field: {onChange, value, ref} }) => (
-                                        <DatePicker
-                                            ref={ref}
-                                            placeholderText="Select date"
-                                            onChange={(selected: Date) => {
-                                                onChange(selected)
-                                                setSelectedDate(selected);
-                                                return selected;
-                                            }}
-                                            selected={selectedDate}
-                                            value={value}
-                                            dateFormat="MM/dd/yyyy"
-                                            minDate={addDays(new Date(), 1)}
-                                            fixedHeight
-                                            className="mt-2 shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start"
-                                            
+                                    <div>
+
+                                        <label htmlFor="eventTimeStamp" className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left">Event Date: 
+                                        <Controller
+                                            control={control}
+                                            name="eventTimeStamp"
+                                            render={({ field: {onChange, value, ref} }) => (
+                                            <DatePicker
+                                                ref={ref}
+                                                placeholderText="Select date"
+                                                onChange={(selected: Date) => {
+                                                    onChange(selected)
+                                                    setSelectedDate(selected);
+                                                    return selected;
+                                                }}
+                                                selected={selectedDate}
+                                                value={value}
+                                                dateFormat="MM/dd/yyyy"
+                                                minDate={addDays(new Date(), 1)}
+                                                fixedHeight
+                                                className={`mt-2 shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.eventTimeStamp && "border-red-600"}`}
+                                                
+                                            />
+                                            )}
+                                            rules = {{
+                                                required: "Please enter a valid date."
+                                            }
+                                            }
                                         />
-                                        )}
-                                    />
-                                    </label>
+                                        </label>
+                                    </div>
+                                    <ErrorMessage errors={errors} name="eventTimeStamp"
+                                        render={({message}) => (
+                                            <small className="mb-6 text-red-400">{message}</small>
+                                            )}
+                                />
                                 </div>
                                 <div className="mx-4 mt-9">
                                     <label htmlFor="active" className="relative inline-flex items-center cursor-pointer">
@@ -333,13 +387,13 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                             <br/>
                             <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={showModal}>
+                                    <button className="px-4 py-2 font-bold text-white bg-indigo-500 rounded hover:bg-indigo-700 focus:outline-none focus:shadow-outline" type="button" onClick={showModal}>
                                         Upload Images
                                     </button>
                                 
                                 </div>
                                 <div>
-                                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded focus:outline-none focus:shadow-outline" type="submit">
+                                    <button className="px-8 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline" type="submit">
                                         Add Event
                                     </button>
                                 </div>
@@ -347,12 +401,12 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                         </form>
                     </div>
                     <div>
-                        {isLoaded ? <Map venue = {venue} placeId = {placeId}/> : <div className="w-full h-screen animate-spin"></div>}
+                        {isLoaded ? <Map venue = {venue}/> : <div className="w-full h-screen animate-spin"></div>}
                     </div>
                 </div>
             </div>
             <div id="imageModal" tabIndex={-1} className={`overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full ${!showImageModal && "hidden" }`}>
-                <div className="p-4 w-full max-w-4xl h-full m-auto">
+                <div className="w-full h-full max-w-4xl p-4 m-auto">
                     <ImageModal previewImgs={previewImgsFunc} hideModal={hideModal}/>
                 </div>
 
