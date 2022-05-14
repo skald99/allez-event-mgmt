@@ -17,7 +17,7 @@ function App() {
         <header >
           <Navigation />
         </header>
-        <div className='App-body'>
+        <div >
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/createEvent' element={<NewEvent type={EventType.NEW}/>} />
