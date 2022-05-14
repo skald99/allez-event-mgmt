@@ -76,8 +76,7 @@ async function createUser(person : User) {
 
      if(isNaN(Number(person.phone)))throw [400, "Data Not In Right Format"]
 
-     if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
-     !isNaN(Number(person.address.postal_code)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
+     if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) || !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
      !isNaN(Number(person.email))
      ) throw [400, "Data Not In Correct Format"]                        
     let newUser : User = { // creating an object that can be inserted into database
