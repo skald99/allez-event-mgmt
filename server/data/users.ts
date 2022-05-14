@@ -68,7 +68,8 @@ async function createUser(person : User) {
     }
     
     await users(); // instantiating the mongoCollection
-
+    let existingUserData = await collections.users?.findOne({email: person.email.trim()}); 
+    if(!existingUserData){
     let result = await collections.users?.insertOne(newUser); // inserting the object into the database along with a newly created user objectId
     if(result?.acknowledged == false) throw [500,'could not register the user']; // if unable to store the details throw an error
     let createUserData = await collections.users?.findOne({_id: result?.insertedId}); // finding the newly inserted object with the new userId
@@ -76,6 +77,10 @@ async function createUser(person : User) {
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     console.log(createUserData);
     return createUserData;
+    }
+    else{
+        throw [400, "User Already Exists"]
+    }
 }
 
 
@@ -122,10 +127,10 @@ async function modifyUser(person : User) {
     }
     
     await users(); // instantiating the mongoCollection
-
+    
     let result = await collections.users?.updateOne( {_id: parseId}, {$set: modifiedUser});
     if(result?.modifiedCount === 0) throw [500,'could not modify the users details']; // if unable to update throw an error
-    let createUserData = await collections.users?.findOne({email: person.email}); // finding the newly inserted object with the new userId
+    let createUserData = await collections.users?.findOne({email: person.email.trim()}); // finding the newly inserted object with the new userId
     if(createUserData == null) throw [404,'could not find the details of the registered user']; // if unable to find details of user throw an error
     createUserData._id = createUserData._id.toString(); // converting id from ObjectId to string
     return createUserData;
