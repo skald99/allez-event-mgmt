@@ -1,7 +1,7 @@
 
 type Event = {
     _id : string,
-    eventImgs: [],
+    eventImgs: string[],
     name : string,
     category : string[],
     price: number,
