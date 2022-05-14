@@ -16,6 +16,8 @@ import { events } from "../config/mongoCollections"
 import { User } from '../models/user.model';
 import { Event } from '../models/events.model';
 import { ObjectId } from 'mongodb';
+import firestoreDb from "../app";
+import { faker } from "@faker-js/faker";
 
 async function* asyncGenerator(num: number) {
   let i = 0;
@@ -44,6 +46,12 @@ async function seedData(num: number) {
         
         try {
             let tmp = await userFunctions.createUser(tempUser);
+            const password: string = faker.internet.password()
+            const querySnapshot = await firestoreDb.collection("users").add({
+              email: tempUser.email,
+              password: password,
+              userId: tmp._id
+          });
             userEventLog.push({id: tmp._id as string, attendArr: tmp.attendEventArray, hostArr: tmp.hostEventArray});
             let tempEvent1 = newEvent();
             let tempEvent2 = newEvent();
@@ -54,6 +62,7 @@ async function seedData(num: number) {
             console.log("Adding events to users");
             let event = await eventFunctions.createEvent(finalEvent1);
             let addEvent1InUserCollection = await userFunctions.addHostedEvent(hostId, event._id.toString());
+
             let event2 = await eventFunctions.createEvent(finalEvent2);
             let addEvent2InUserCollection = await userFunctions.addHostedEvent(hostId, event2._id.toString());
             console.log("Check22");
@@ -68,7 +77,7 @@ async function seedData(num: number) {
     console.log(eventIds);
     console.log(userEventLog);
 
-    //Please fix the cohost and attendee insertion for events and users. I am unable to do so. //Bapi 
+
     // for(let j = 0;j < eventIds.length; j++) {
     //     let numOfInserts = Math.floor(Math.random() * userEventLog.length);
     //     console.log("L72: "+numOfInserts);
@@ -102,5 +111,5 @@ async function seedData(num: number) {
 //     console.log("--------------------------------------------");
 //   console.log("Starting to Create Events...");
 // }
-dropAll();
+//dropAll();
 seedData(5);
