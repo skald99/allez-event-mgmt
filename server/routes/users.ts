@@ -54,36 +54,41 @@ router.post("/login", async(req, res) => {
     }
 })
 
-router.post("/", async(req, res) => {
+router.post("/signup", async(req, res) => {
     try{
-        if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email)!='string'||
-        typeof(req.body.address.city)!='string'||
-        typeof(req.body.address.state)!='string'||
-        typeof(req.body.address.postal_code)!='string'||
-        typeof(req.body.address.country)!='string') throw [400, "Data Not In Right Format"]
 
-        if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim()  || 
-        !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code.trim() ||
-         !req.body.address.country.trim() ) throw [400, "Data Not In Right Format"]
+        // let { user, password } = req.body;
+        // let {name, address, phone, gender, email, dataOfBirth} = user;
+        for(let param in req.body) {
+            console.log(req.body[param])
+        }
+        if(typeof(req.body.user.name)!='string'||typeof(req.body.user.gender)!='string'||typeof(req.body.user.email)!='string'||
+        typeof(req.body.user.address.city)!='string'||
+        typeof(req.body.user.address.state)!='string'||
+        typeof(req.body.user.address.postal_code)!='string'||
+        typeof(req.body.user.address.country)!='string') throw [400, "Data Not In Right Format"]
 
-         if(isNaN(Number(req.body.phone)))throw [400, "Data Not In Right Format"]
+        if(!req.body.user.name.trim() || !req.body.user.gender.trim() || !req.body.user.email.trim()  || 
+        !req.body.user.address.city.trim() || !req.body.user.address.state.trim() || !req.body.user.address.postal_code.trim() ||
+         !req.body.user.address.country.trim() ) throw [400, "Data Not In Right Format"]
 
-         if( !isNaN(Number(req.body.name)) || !isNaN(Number(req.body.address.city)) || !isNaN(Number(req.body.address.state)) ||
-         !isNaN(Number(req.body.address.postal_code)) || !isNaN(Number( req.body.address.country)) || !isNaN(Number(req.body.gender)) ||
-         !isNaN(Number(req.body.email))
+         if(isNaN(Number(req.body.user.phone)))throw [400, "Data Not In Right Format"]
+
+         if( !isNaN(Number(req.body.user.name)) || !isNaN(Number(req.body.user.address.city)) || !isNaN(Number(req.body.user.address.state)) || !isNaN(Number( req.body.user.address.country)) || !isNaN(Number(req.body.user.gender)) ||
+         !isNaN(Number(req.body.user.email))
          ) throw [400, "Data Not In Correct Format"]
         let newUser: User = {
-            "name": xss(req.body.name.trim()),
+            "name": xss(req.body.user.name.trim()),
             "address": {
-                "city": xss(req.body.address.city.trim()),
-                "state": xss(req.body.address.state.trim()),
-                "postal_code": xss(req.body.address.postal_code.trim()),
-                "country": xss(req.body.address.country.trim())
+                "city": xss(req.body.user.address.city.trim()),
+                "state": xss(req.body.user.address.state.trim()),
+                "postal_code": xss(req.body.user.address.postal_code.trim()),
+                "country": xss(req.body.user.address.country.trim())
             },
-            "phone": xss(Number(req.body.phone)),
-            "gender": xss(req.body.gender.trim()),
-            "email": xss(req.body.email.trim()),
-            "dateOfBirth": xss(req.body.dateOfBirth),
+            "phone": xss(Number(req.body.user.phone)),
+            "gender": xss(req.body.user.gender.trim()),
+            "email": xss(req.body.user.email.trim()),
+            "dateOfBirth": xss(req.body.user.dateOfBirth),
             "hostEventArray": [],
             "attendEventArray": []
         }
@@ -91,14 +96,14 @@ router.post("/", async(req, res) => {
         let newlyCreatedUser = await usersData.createUser(newUser);
 
         const querySnapshot = await firestoreDb.collection("users").add({
-            email: req.body.email,
+            email: req.body.user.email,
             password: req.body.password,
             userId: newlyCreatedUser._id
         });
 
         res.status(200).json({ "success": true, "newUser": newlyCreatedUser, "firestoreId": querySnapshot.id});
-    }catch(e){
-        res.status(400).json({ "success": false, "result": e });
+    }catch(e:?){
+        res.status(400).json({ "success": false, "result": e[1] });
     }
 })
 

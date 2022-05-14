@@ -55,8 +55,11 @@ const SignupForm = (props: {className: string}) => {
             password: password
         }
         
-        let user = await axios.post("http://localhost:4000/users/", inputUser)
-        console.log(user);
+        let user = await axios.post("http://localhost:4000/users/signup", inputUser)
+    //     await axios.post('http://localhost:4000/users/', inputUser).then(({ data }) => {
+    //     console.log(data);
+    // })
+    console.log(user);
     };
     const onErrors: SubmitErrorHandler<UserSignup> = data => console.log(data);
     

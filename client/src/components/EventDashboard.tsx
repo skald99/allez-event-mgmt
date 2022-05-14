@@ -160,7 +160,7 @@ const EventList = () => {
         console.log(imgSrc)
         return (
             <div className="max-w-sm rounded overflow-hidden shadow-lg">
-                <img className="w-full" src={imgSrc} />
+                <img className="w-full" src={imgSrc as string} />
                 <div className="px-6 py-4">
                     <div className="font-bold text-xl mb-2">{event.name}</div>
                     <p className="text-gray-700 text-base">
