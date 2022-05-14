@@ -13,8 +13,8 @@ router.get("/logout", async(req, res) => {
             if(req.session) throw 400;
         })
     }catch(e){
-        if(e == 400) res.status(400).json({"success": false, "result": e});
-        else res.status(200).json({"success": true, "result": "user has successfully logged out"});
+        if(e == 400) {res.status(400).json({"success": false, "result": e}); return;}
+        else { res.status(200).json({"success": true, "result": "user has successfully logged out"}); return;}
     }
 })
 
@@ -24,8 +24,10 @@ router.get("/", async(req, res) => {
         let getUserDetails = await usersData.getUser(id);
         console.log(getUserDetails);
         res.status(200).json({ "success": true, "result": getUserDetails });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -49,8 +51,10 @@ router.post("/login", async(req, res) => {
         }else throw [400, "Either email or password are invalid."];
 
         res.status(200).json({ "success": true, "result": "successful in login" });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -99,10 +103,14 @@ router.post("/signup", async(req, res) => {
             userId: newlyCreatedUser._id
         });
 
-        res.status(200).json({ "success": true, "newUser": newlyCreatedUser, "firestoreId": querySnapshot.id});
+        return res.status(200).json({ "success": true, "newUser": newlyCreatedUser, "firestoreId": querySnapshot.id});
+        //return;
     }catch(e: ?){
+        console.log(e)
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        //return;
     }
+    return;
 })
 
 router.put("/", async(req, res) => {
@@ -160,8 +168,10 @@ router.put("/", async(req, res) => {
         });
 
         res.status(200).json({ "success": true, "result": updatedUser });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -170,8 +180,10 @@ router.get("/getHostedEvents", async(req, res) => {
         let hostedEvents = await usersData.getHostedEvents(xss(req.session.userId));
         console.log(hostedEvents);
         res.status(200).json({ "success": true, "result": hostedEvents });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -180,8 +192,10 @@ router.get("/getRegisteredEvents", async(req, res) => {
         let registeredEvents = await usersData.getRegisteredEvents(xss(req.session.userId));
         console.log(registeredEvents);
         res.status(200).json({ "success": true, "result": registeredEvents });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -207,9 +221,11 @@ router.post("/changepassword", async(req, res) => {
 
         console.log(querySnapshot);
         res.status(200).json({"success": true, "result": "password changed successfully"});
+        return;
     }catch(e: ?){
         console.log(e);
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
@@ -223,8 +239,10 @@ router.delete("/", async(req, res) => {
         req.session.destroy((err) => {
         })
         if(!req.session) res.status(200).json({ "success": true, "result": deleteRequestedUser });
+        return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
+        return;
     }
 })
 
