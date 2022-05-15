@@ -29,24 +29,23 @@ app.use(function(req, res, next) {
  * Middleware Functions
  */
 app.use("*", (req, res, next) => {
-    console.log("Incoming URL: " + req.url + " " + req.method + " " + new Date());
+    console.log("Incoming URL: " + req.url + " " + req.method + " " + new Date() + req.session.userId + " ");
     next();
 });
 
 let regex = "^\/users(\/login|\/signup)?(\/)?$";
 let shouldAuthenticate = true;
-// app.post(regex, (req, res, next) => {
-//     if(req.session.userId)
-//         console.log("coming here");
-//         return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
-//     shouldAuthenticate = false;
-//     next();
-// });
-// app.use('*', (req, res, next) => {
-//     if(shouldAuthenticate && !req.session.userId)
-//         return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
-//     next();
-// });
+app.post(regex, (req, res, next) => {
+    if(req.session.userId)
+        return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
+    shouldAuthenticate = false;
+    next();
+});
+app.use('*', (req, res, next) => {
+    if(shouldAuthenticate && !req.session.userId)
+        return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+    next();
+});
 app.use('*', (req, res, next) => {
     if(req.body) {
         for(let param in req.body) {

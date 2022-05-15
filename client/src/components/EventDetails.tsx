@@ -27,9 +27,8 @@ const EventDetails = () => {
             await axios.get(`http://localhost:4000/events/event/`, {
                 params: {
                     eventId: id
-
-                }
-            }).then(({ data }) => {
+                
+            }, withCredentials: true}).then(({ data }) => {
 
                 setEvent(data.result)
             }
