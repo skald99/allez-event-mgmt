@@ -33,6 +33,7 @@ router.get("/", async(req, res) => {
 
 router.post("/login", async(req, res) => {
     try{
+        if(req.session.userId) throw [400, "user is already loggedin."];
         if(typeof(req.body.email)!='string'||typeof(req.body.password)!='string') throw [400, "Login Details Not In String Format"]
         if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Login Details Might Be Empty"]
         let email: string = xss(req.body.email.trim());
@@ -206,11 +207,14 @@ router.post("/changepassword", async(req, res) => {
 
         let oldPassword: string = req.body.oldPassword.trim()
         let newPassword: string = req.body.newPassword.trim();
-        let userId: string = req.session.userId;
+        // let userId: string;
+        // if(req.session.userId) {
+        //     let userId = req.session.userId;
+        // }
 
-        console.log("userId", userId);
+        //console.log("userId", userId);
 
-        const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", userId).where("password", "==", oldPassword).get();
+        const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", req.session.userId).where("password", "==", oldPassword).get();
         if(!prequerySnapshot.docs[0]) throw [400,"Old Password is incorrect."];
 
         const firebaseId = prequerySnapshot.docs[0].id;
