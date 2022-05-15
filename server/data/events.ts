@@ -11,8 +11,6 @@ const config = process.env
 
 async function createEvent(eventDetails: Event) {
 
-
-
     if(typeof(eventDetails.name)!='string' || typeof(eventDetails.venue.address)!='string' || typeof(eventDetails.venue.city)!='string'||
     typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
@@ -209,10 +207,15 @@ async function addCohost(eventId: string | ObjectId, userId: string) {
 async function addAttendee(eventId: string | ObjectId, userId: string) {
     if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
     if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
+    let userData = await usersdata.getUser(userId.toString().trim())
+    let dob = userData.dateOfBirth
+    let ageInYears = new Date().getFullYear() - new Date(dob).getFullYear();
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let requestedEvent = await collections.events?.findOne({ _id: eventId })
+    
     if (!requestedEvent) throw [400, "Event Not Found"]
+    if(ageInYears<requestedEvent?.minAge) throw [400, "You Do Not Meet The Minimum Age Requirements To Attend This Event."]
     if (requestedEvent?.totalSeats === requestedEvent?.bookedSeats) {
         throw [400, 'Event Is Full Already']
     }
@@ -235,6 +238,7 @@ async function addAttendee(eventId: string | ObjectId, userId: string) {
         }
     }
 }
+
 
 async function unRegister(eventId: string | ObjectId, userId: string) {
     if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
