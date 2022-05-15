@@ -14,8 +14,8 @@ const RegisteredEvents = () => {
             await axios.get(`http://localhost:4000/users/RegisteredEvents`).then(({ data }) => {
                 let events = data.result
                 console.log(events)
-                let upcomingFilter = events.filter((event) => (new Date(event.eventTimeStamp).getTime() > new Date().getTime()))
-                let pastFilter = events.filter((event) => (new Date(event.eventTimeStamp).getTime() <= new Date().getTime()))
+                let upcomingFilter = events.filter((event: { eventTimeStamp: string | number | Date; }) => (new Date(event.eventTimeStamp).getTime() > new Date().getTime()))
+                let pastFilter = events.filter((event: { eventTimeStamp: string | number | Date; }) => (new Date(event.eventTimeStamp).getTime() <= new Date().getTime()))
 
                 setUpcomingEvents(upcomingFilter)
                 setPastEvents(pastFilter)

@@ -10,8 +10,8 @@ type Event = {
     bookedSeats : number,
     minAge: number,
     hostId ?: string,
-    cohostArr ?: [],
-    attendeesArr ?: [],
+    cohostArr ?: string [],
+    attendeesArr ?: string [],
     venue: {
         address: string,
         city: string,

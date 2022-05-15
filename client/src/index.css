@@ -3,6 +3,7 @@
 @tailwind utilities;
 @import "~react-image-gallery/styles/css/image-gallery.css";
 @import 'react-tabs/style/react-tabs.css';
+@import 'react-toastify/dist/ReactToastify.css';
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

@@ -165,7 +165,6 @@ async function addCohost(eventId: string | ObjectId, userId: string) {
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let cohostUpdated = await collections.events?.updateOne({ _id: eventId }, { $addToSet: { cohostArr: userId.toString().trim() } });
-    console.log(cohostUpdated)
     if (cohostUpdated?.modifiedCount === 0) {
         throw [500, "Cannot Add Co Host"]
     }
@@ -245,7 +244,6 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
             let imgIds: string[] = requestedEvent?.eventImgs
             imageUrls = await populateImageUrl(imgIds)
         }
-        console.log(imageUrls)
         requestedEvent!.eventImgs = imageUrls
         return requestedEvent;
 
@@ -262,7 +260,6 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
             let imgIds: string[] = requestedEvent?.eventImgs
             imageUrls = await populateImageUrl(imgIds)
         }
-        console.log(imageUrls)
         requestedEvent!.eventImgs = imageUrls
         return requestedEvent
     }
