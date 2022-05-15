@@ -43,12 +43,15 @@ router.post('/create', upload.any(), async (req, res) => {
     let obj: Event = req.body;
     if(req.session.userId) obj.hostId = req.session.userId?.toString();
     let imgArr: string[] = []
-    req.files?.forEach((file: Express.Multer.File) => {
-        imgArr.push(file.id.toString())
-    })
-    console.log(imgArr)
+    if(req.files) {
+        let inputFiles:{ [fieldname: string]: Express.Multer.File[]; } | Express.Multer.File[] = req.files;
+        if(Array.isArray(inputFiles)) {
+            for(let index  in inputFiles)
+                imgArr.push(inputFiles[index].id.toString());
+        }
+    }
+ 
     obj.eventImgs = imgArr
-    // console.log(obj)
     try {
         if (req.session.userId) {
             obj = validateEvent(obj)

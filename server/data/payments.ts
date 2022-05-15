@@ -4,13 +4,20 @@ import Stripe from "stripe";
 import "dotenv/config";
 
 let stripe_key : string;
-if(process.env.STRIPE_PRIVATE_KEY) {
-    stripe_key = process.env.STRIPE_PRIVATE_KEY
+if(process.env.STRIPE_PUBLISHABLE_KEY) {
+    stripe_key = process.env.STRIPE_PUBLISHABLE_KEY
 } else {
     throw new Error("Stripe Key is not set");
 }
 
-const stripe = new Stripe( stripe_key, {
+let stripe_secret_key: string;
+if(process.env.STRIPE_SECRET_KEY) {
+    stripe_secret_key = process.env.STRIPE_SECRET_KEY
+} else {
+    throw new Error("Stripe Secret Key is not set");
+}
+
+const stripe = new Stripe( stripe_secret_key, {
     apiVersion: '2020-08-27'
 });
 

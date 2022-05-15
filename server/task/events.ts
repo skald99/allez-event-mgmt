@@ -28,7 +28,7 @@ function newEvent() {
         "6280481497b18f6edbd5e0af",
         "6280485097b18f6edbd5e0b1",
         "6280486897b18f6edbd5e0b3",
-        "628048c797b18f6edbd5e0b5"]);
+        "628048c797b18f6edbd5e0b5"], 5);
     const price: number = parseFloat(faker.commerce.price(undefined,undefined,2));
     const description : string = faker.commerce.productDescription();
     const totalSeats: number = faker.datatype.number({max: 200});

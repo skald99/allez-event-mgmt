@@ -43,9 +43,9 @@ async function seedData(num: number) {
     const eventIds: string[] = [];
     const userIds: string[] = [];
     const login: {email:string, password:string}[] = [];
-        for (let i = 0; i < num; i++) {
+    for (let i = 0; i < num; i++) {
         let tempUser: User = newUser();
-        
+
         try {
             let tmp = await userFunctions.createUser(tempUser);
             const password: string = faker.internet.password()
@@ -73,54 +73,33 @@ async function seedData(num: number) {
 
             // add cohosts for the events
             if(userIds.length > 1) {
-              let addCoHosts = await eventFunctions.addCohost(event._id, userIds[i-1]);
-              let addEventInUserCollection = await userFunctions.addHostedEvent(userIds[i-1], event._id.toString());
+              await eventFunctions.addCohost(event._id, userIds[i-1]);
+              await userFunctions.addHostedEvent(userIds[i-1], event._id.toString());
+
+              await eventFunctions.addCohost(event2._id, userIds[i-1]);
+              await userFunctions.addHostedEvent(userIds[i-1], event2._id.toString());
             }
 
             // add participants for the events
             if(userIds.length>2) {
               for(let j=0; j<userIds.length-2; j++) {
-                let addattendees = await eventFunctions.addAttendee(event._id, userIds[j]);
-                let addEventInUserCollection = await userFunctions.addRegisteredEvent(userIds[j], event._id.toString());
+                await eventFunctions.addAttendee(event._id, userIds[j]);
+                await userFunctions.addRegisteredEvent(userIds[j], event._id.toString());
+                await eventFunctions.addAttendee(event2._id, userIds[j]);
+                await userFunctions.addRegisteredEvent(userIds[j], event2._id.toString());
               }
             }
 
-            console.log("Check22");
-            console.log(typeof event?._id);
+            
             eventIds.push(event?._id.toString()!, event2?._id.toString()!);
-            //login.push({ email: tempUser.email, password: tempUser.password });
-            console.log(`Inserting Users: ${i}/${num - 1}`);
+            login.push({ email: tempUser.email, password: password });
+            console.log(`Inserted Users: ${i}/${num - 1}`);
         } catch (e) {
             console.log(e);
         }
     }
-    console.log(eventIds);
-    console.log(userEventLog);
-
-
-    // for(let j = 0;j < eventIds.length; j++) {
-    //     let numOfInserts = Math.floor(Math.random() * userEventLog.length);
-    //     console.log("L72: "+numOfInserts);
-    //     let attendOrCoHost: number = Math.floor(Math.random());
-    //     console.log("attendOrCoHost: "+ attendOrCoHost);
-    //     for(let i = 0; i < numOfInserts; i++) {
-    //         if(!userEventLog[i].hostArr.includes(eventIds[j]) || !userEventLog[i].attendArr.includes(eventIds[j])) {
-    //             let userId = userEventLog[i].id;
-    //             console.log(userEventLog[i]);
-    //             if(!userEventLog[i].hostArr.includes(eventIds[j])) {
-    //                 let attendee = await eventFunctions.addAttendee(eventIds[j],userId);
-    //                 userEventLog[i].attendArr.push(eventIds[j]);
-    //                 console.log(attendee);
-    //             } else if(!userEventLog[i].attendArr.includes(eventIds[j]) && (userEventLog[i].id != userId)) {
-    //                 let cohost = await eventFunctions.addCohost(eventIds[j], userId);
-    //                 console.log(cohost);
-    //             }
-    //         }
-    //     }
-    // }
-
-  
-    console.log("All users have been created!");
+    // console.log(eventIds);
+    // console.log(userEventLog);
     // output to json
     let userLogin = JSON.stringify(login);
     writeFile('./task/user.json', userLogin, "utf8", () => {})
@@ -131,5 +110,11 @@ async function seedData(num: number) {
 //     console.log("--------------------------------------------");
 //   console.log("Starting to Create Events...");
 // }
-//dropAll();
-seedData(5);
+
+async function main() {
+  // await dropAll();
+  await seedData(5);
+  console.log("SEED COMPLETED!!!");
+}
+
+main()
