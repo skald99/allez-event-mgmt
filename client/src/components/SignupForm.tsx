@@ -1,12 +1,12 @@
 import React from "react";
 import { SubmitHandler, SubmitErrorHandler, Controller, useForm } from "react-hook-form";
 import { ErrorMessage } from "@hookform/error-message"
-// import DatePicker from "react-datepicker";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { subYears } from "date-fns";
 import axios from "axios";
 import User from "../models/user.model";
-import { DatePicker } from "react-widgets/cjs";
+// import { DatePicker } from "react-widgets/cjs";
 
 
 const SignupForm = (props: {className: string}) => {
@@ -56,10 +56,7 @@ const SignupForm = (props: {className: string}) => {
         }
         
         let user = await axios.post("http://localhost:4000/users/signup", inputUser)
-    //     await axios.post('http://localhost:4000/users/', inputUser).then(({ data }) => {
-    //     console.log(data);
-    // })
-    console.log(user);
+        console.log(user);
     };
     const onErrors: SubmitErrorHandler<UserSignup> = data => console.log(data);
     
@@ -221,31 +218,23 @@ const SignupForm = (props: {className: string}) => {
                                                 required: "Please enter your date of birth.",
                                             }}
                                             render={({ field: {onChange, value, ref} }) => (
-                                                <DatePicker
-                                                    defaultValue={subYears(new Date(), 10)}
-                                                    valueFormat={{dateStyle: "medium"}}
-                                                    onChange={onChange}
-                                                    placeholder="Select your date of birth"
-                                                    max={subYears(new Date(), 5)}
-                                                    containerClassName={`border-gray-200 w-72 focus:m-0 rounded text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.dateOfBirth ? "border-red-600": ""}`}
-                                                />
-                                            // <DatePicker
-                                            //     ref={ref}
-                                            //     placeholderText="Select date"
-                                            //     onChange={(selected: Date) => {
-                                            //         onChange(selected)
-                                            //         setDob(selected);
-                                            //         return selected;
-                                            //     }}
-                                            //     selected={dob}
-                                            //     value={value}
-                                            //     dateFormat="MM/dd/yyyy"
-                                            //     maxDate={subYears(new Date(),5)}
-                                            //     showMonthDropdown
-                                            //     showYearDropdown
-                                            //     fixedHeight
-                                            //     className={`shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.dateOfBirth ? "border-red-600": ""}`}
-                                            // />
+                                            <DatePicker
+                                                ref={ref}
+                                                placeholderText="Select date"
+                                                onChange={(selected: Date) => {
+                                                    onChange(selected)
+                                                    setDob(selected);
+                                                    return selected;
+                                                }}
+                                                selected={dob}
+                                                value={value}
+                                                dateFormat="MM/dd/yyyy"
+                                                maxDate={subYears(new Date(),5)}
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                fixedHeight
+                                                className={`shadow border-2 border-gray-200 w-72 focus:m-0 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline content-start ${errors.dateOfBirth ? "border-red-600": ""}`}
+                                            />
                                             )}
                                         />
                                     </div>

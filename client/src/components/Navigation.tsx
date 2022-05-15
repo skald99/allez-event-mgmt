@@ -15,6 +15,9 @@ const Navigation = () => {
                             <Link to={"/eventDashboard"} className = "px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">Test</Link>
                         </div>
                         <div className="flex">
+                            <Link to={"/events/create"} className = "px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">New Event</Link>
+                        </div>
+                        <div className="flex">
                         <Link to={"/users"} className = "px-6 py-2 mx-5 my-2 font-sans text-white transition ease-out delay-300 bg-blue-700 rounded-md hover:bg-blue-300 hover:text-slate-800">Login/Signup</Link>
                         </div>
                     </div>

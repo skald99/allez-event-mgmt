@@ -28,7 +28,7 @@ const EventDetails = () => {
                 params: {
                     eventId: eventId
                 
-            }}).then(({ data }) => {
+            }, withCredentials: true}).then(({ data }) => {
 
                 setEvent(data.result)
             }
