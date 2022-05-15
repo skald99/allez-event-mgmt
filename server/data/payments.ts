@@ -2,7 +2,7 @@ import { Event } from "../models/events.model";
 import { User } from "../models/user.model";
 import Stripe from "stripe";
 import "dotenv/config";
-
+import { ObjectId } from "mongodb";
 let stripe_key : string;
 if(process.env.STRIPE_PRIVATE_KEY) {
     stripe_key = process.env.STRIPE_PRIVATE_KEY
@@ -106,11 +106,48 @@ async function getEvent(eventID: string): Promise<Stripe.Response<Stripe.Product
 }
 
 async function modifyEvent(event: Event) {
-    if((!event) ||(event._id === undefined) || (!event.name || event.name.trim().length === 0) || (!event.description || event.description.trim().length === 0)
-        || (event.category.length === 0) || (!event.totalSeats || event.totalSeats === 0) || (event.hostId === undefined) || (!event.minAge)) {
+    
+    if((!event) ||(event._id === undefined) || (!event.name || event.name.trim().length === 0) ||
+     (!event.description || event.description.trim().length === 0)
+    || (event.category.length === 0) || (!event.totalSeats || event.totalSeats === 0) || 
+    (event.hostId === undefined) || (!event.minAge)) {
             throw [400, "Bad Request, Insufficient parameters sent."];
-    } else {
-        
+    }
+    if(typeof(event.name)!='string' || typeof(event.venue.address)!='string' || typeof(event.venue.city)!='string'||
+    typeof(event.venue.state)!='string' || typeof(event.venue.city)!='string' || typeof(event.venue.zip)!='string'
+    ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
+
+    if (!event.name.trim() || !event.venue.address.trim() || !event.venue.city.trim() ||
+     !event.venue.state.trim() || !event.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
+
+    if (isNaN(Number(event.totalSeats)) ||
+     isNaN(Number(event.minAge)) ||
+      isNaN(Number(event.venue.geoLocation.lat)) ||
+     isNaN(Number(event.venue.geoLocation.long)) ||
+     isNaN(Number(event.venue.zip))
+     ) throw [400, "Events Data Might Not Be Number Where Expected"]
+
+    if (!isNaN(Number(event.venue.address)) || !isNaN(Number(event.venue.city)) || 
+    !isNaN(Number(event.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
+     else {
+        let modEvent: EventProduct = {
+            "id": event._id?.toString(),
+            "name": event.name,
+            "description": event.description,
+            "images": event.eventImgs,
+            "metadata": {
+                "category": event.category.toString(),
+                "totalSeats": event.totalSeats,
+                "hostId": event.hostId.toString(),
+                "minAge": event.minAge
+            }
+        }
+        const product = await stripe.products.update(
+            event._id.toString(),
+            modEvent
+          );
+          let updatePrice = updateEventRegFee(event._id.toString(), event.price)
+          return modEvent
     }
 }
 
@@ -276,5 +313,6 @@ export default {
     updateEventRegFee,
     addCustomer,
     removeCustomer,
-    createPaymentIntent
+    createPaymentIntent,
+    modifyEvent
 }

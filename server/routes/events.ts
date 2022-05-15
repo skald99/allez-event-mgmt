@@ -104,7 +104,6 @@ router.get('/event', async (req, res) => {
             }
             console.log('test')
             let getById = await eventsData.getbyId(obj)
-            console.log(getById)
             return res.status(200).json({ "success": true, "result": getById })
         }
         catch (e: ?) {
@@ -126,7 +125,7 @@ router.get('/free', async (req, res) => {
     }
 });
 
-router.post('/event/:eventid/register', async function (req, res) {
+router.post('/event/register/:eventid', async function (req, res) {
     try {
         if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
 
@@ -149,7 +148,7 @@ router.post('/event/:eventid/register', async function (req, res) {
     }
 });
 
-router.post('/event/:eventid/unregister', async function (req, res) {
+router.post('/event/unregister/:eventid', async function (req, res) {
     try {
         if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
         if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']
@@ -301,14 +300,14 @@ router.delete('/event/:eventid', async function (req, res) {
 
 function validateEvent(obj: Event) {
     if (typeof (obj.name) != 'string' || typeof (obj.venue.address) != 'string' || typeof (obj.venue.city) != 'string' ||
-        typeof (obj.venue.state) != 'string' || typeof (obj.venue.zip) != 'string' || typeof (obj.venue.city) != 'string'
+        typeof (obj.venue.state) != 'string' || typeof (obj.venue.city) != 'string' || typeof(obj.venue.zip)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
 
     if (!obj.name.trim() || !obj.venue.address.trim() || !obj.venue.city.trim() || !obj.venue.state.trim() ||
         !obj.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
 
     if (isNaN(Number(obj.totalSeats)) || isNaN(Number(obj.minAge)) || isNaN(Number(obj.venue.geoLocation.lat)) ||
-        isNaN(Number(obj.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+        isNaN(Number(obj.venue.geoLocation.long)) || isNaN(Number(obj.venue.zip))) throw [400, "Events Data Might Not Be Number Where Expected"]
 
     if (!isNaN(Number(obj.venue.address)) || !isNaN(Number(obj.venue.city)) ||
         !isNaN(Number(obj.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
