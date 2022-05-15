@@ -4,7 +4,7 @@ import { useForm, SubmitHandler, SubmitErrorHandler, Controller } from "react-ho
 import { ErrorMessage } from "@hookform/error-message"
 import Select, { MultiValue } from "react-select";
 import DatePicker from "react-datepicker";
-import { addDays, parseISO } from "date-fns";
+import { addDays, format } from "date-fns";
 import {useJsApiLoader} from "@react-google-maps/api";
 import { Combobox } from "react-widgets/cjs";
 import usePlacesAutocomplete, { getGeocode, getLatLng, getZipCode } from "use-places-autocomplete";
@@ -48,14 +48,24 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
     console.log(type)
     let { eventId } = useParams();
     const [eventData, setEventData] = React.useState<newEventData|undefined>(undefined);
-    
+    let catg: {label: string, value: string}[]= [];
+    if(eventData?.category) {
+        eventData.category.forEach(e => {
+            let eCat = {
+                label: e,
+                value: e
+            }
+            catg.push(eCat);
+        })
+    }
     const {register, handleSubmit, reset, formState: {errors}, control} = useForm<newEventData>({
         defaultValues: {
             "name": eventData?.name,
             "description": eventData?.description,
             "minAge": eventData?.minAge,
             "totalSeats": eventData?.totalSeats,
-            "price": eventData?.price
+            "price": eventData?.price,
+            "eventTimeStamp": format(new Date(eventData?.eventTimeStamp!), "MMM DD YYYY")
         }
     });
 
@@ -307,6 +317,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                             render={({field: {onChange}}) => (
                                                 <Select
                                                     id="category"
+                                                    defaultValue={catg}
                                                     options={[
                                                         {value: "Career", label: "Career"},
                                                         {value: "Music", label: "Music"},
