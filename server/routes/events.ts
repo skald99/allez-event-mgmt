@@ -100,11 +100,12 @@ router.get('/event', async (req, res) => {
                 if(!ObjectId.isValid(obj.hostId.toString())) throw [400, "Host ID Is Invalid"]
             }
             let getById = await eventsData.getbyId(obj)
-            res.status(200).json({ "success": true, "result": getById})
+            console.log(getById)
+            return res.status(200).json({ "success": true, "result": getById})
         }
         catch (e: ?) {
             console.log(e)
-            res.status(400).json({ "success": false, "result": e[1] })
+            return res.status(400).json({ "success": false, "result": e[1] })
         }
     }
 });

@@ -176,7 +176,7 @@ router.put("/", async(req, res) => {
     }
 })
 
-router.get("/getHostedEvents", async(req, res) => {
+router.get("/HostedEvents", async(req, res) => {
     try{
         let hostedEvents = await usersData.getHostedEvents(xss(req.session.userId));
         console.log(hostedEvents);
@@ -188,15 +188,14 @@ router.get("/getHostedEvents", async(req, res) => {
     }
 })
 
-router.get("/getRegisteredEvents", async(req, res) => {
+router.get("/RegisteredEvents", async(req, res) => {
     try{
         let registeredEvents = await usersData.getRegisteredEvents(xss(req.session.userId));
+        console.log('test')
         console.log(registeredEvents);
-        res.status(200).json({ "success": true, "result": registeredEvents });
-        return;
-    }catch(e: ?){
-        res.status(e[0]).json({ "success": false, "result": e[1]})
-        return;
+        return res.status(200).json({ "success": true, "result": registeredEvents });
+    }catch(e){
+        return res.status(400).json({ "success": false, "result": e });
     }
 })
 
