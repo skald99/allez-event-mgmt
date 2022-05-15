@@ -300,14 +300,14 @@ router.delete('/event/:eventid', async function (req, res) {
 
 function validateEvent(obj: Event) {
     if (typeof (obj.name) != 'string' || typeof (obj.venue.address) != 'string' || typeof (obj.venue.city) != 'string' ||
-        typeof (obj.venue.state) != 'string' || typeof (obj.venue.zip) != 'string' || typeof (obj.venue.city) != 'string'
+        typeof (obj.venue.state) != 'string' || typeof (obj.venue.city) != 'string' || typeof(obj.venue.zip)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
 
     if (!obj.name.trim() || !obj.venue.address.trim() || !obj.venue.city.trim() || !obj.venue.state.trim() ||
         !obj.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
 
     if (isNaN(Number(obj.totalSeats)) || isNaN(Number(obj.minAge)) || isNaN(Number(obj.venue.geoLocation.lat)) ||
-        isNaN(Number(obj.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+        isNaN(Number(obj.venue.geoLocation.long)) || isNaN(Number(obj.venue.zip))) throw [400, "Events Data Might Not Be Number Where Expected"]
 
     if (!isNaN(Number(obj.venue.address)) || !isNaN(Number(obj.venue.city)) ||
         !isNaN(Number(obj.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]

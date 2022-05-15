@@ -36,11 +36,12 @@ router.get("/", async(req, res) => {
 
 router.post("/login", async(req, res) => {
     try{
+        if(req.session.userId) throw [400, "user is already loggedin."];
         if(typeof(req.body.email)!='string'||typeof(req.body.password)!='string') throw [400, "Login Details Not In String Format"]
         if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Login Details Might Be Empty"]
         let email: string = xss(req.body.email.trim());
         let password: string = xss(req.body.password.trim());
-        const hashPassword = await bcrypt.hash(password, bcryptRounds)
+        // const hashPassword = await bcrypt.hash(password, bcryptRounds)
         // retrieve if there is data with the given email
         
         let userId = null;
@@ -191,7 +192,7 @@ router.put("/", async(req, res) => {
     }
 })
 
-router.get("/getHostedEvents", async(req, res) => {
+router.get("/HostedEvents", async(req, res) => {
     try{
         if(!req.session.userId) throw [400, "User Not Logged In"]
         let hostedEvents = await usersData.getHostedEvents(xss(req.session.userId));
@@ -204,16 +205,15 @@ router.get("/getHostedEvents", async(req, res) => {
     }
 })
 
-router.get("/getRegisteredEvents", async(req, res) => {
+router.get("/RegisteredEvents", async(req, res) => {
     try{
         if(!req.session.userId) throw [400, "User Not Logged In"]
         let registeredEvents = await usersData.getRegisteredEvents(xss(req.session.userId));
+        console.log('test')
         console.log(registeredEvents);
-        res.status(200).json({ "success": true, "result": registeredEvents });
-        return;
-    }catch(e: ?){
-        res.status(e[0]).json({ "success": false, "result": e[1]})
-        return;
+        return res.status(200).json({ "success": true, "result": registeredEvents });
+    }catch(e){
+        return res.status(400).json({ "success": false, "result": e });
     }
 })
 
