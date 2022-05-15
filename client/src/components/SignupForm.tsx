@@ -9,7 +9,7 @@ import User from "../models/user.model";
 // import { DatePicker } from "react-widgets/cjs";
 
 
-const SignupForm = (props: {className: string}) => {
+const SignupForm = (props: {className: string, userStatus: (status: number) => void}) => {
     type UserSignup = {
         name: string,
         email: string,
@@ -56,7 +56,11 @@ const SignupForm = (props: {className: string}) => {
         }
         
         let user = await axios.post("http://localhost:4000/users/signup", inputUser)
-        console.log(user);
+        if(user.status === 200 && user.statusText === "OK") {
+            window.sessionStorage.setItem("userId", user.data.userId);
+            // console.log(window.sessionStorage.getItem("userId"));
+            props.userStatus(200);
+        }
     };
     const onErrors: SubmitErrorHandler<UserSignup> = data => console.log(data);
     

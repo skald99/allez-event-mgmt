@@ -104,7 +104,6 @@ router.get('/event', async (req, res) => {
             }
             console.log('test')
             let getById = await eventsData.getbyId(obj)
-            console.log(getById)
             return res.status(200).json({ "success": true, "result": getById })
         }
         catch (e: ?) {
@@ -126,7 +125,7 @@ router.get('/free', async (req, res) => {
     }
 });
 
-router.post('/event/:eventid/register', async function (req, res) {
+router.post('/event/register/:eventid', async function (req, res) {
     try {
         if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
 
@@ -149,7 +148,7 @@ router.post('/event/:eventid/register', async function (req, res) {
     }
 });
 
-router.post('/event/:eventid/unregister', async function (req, res) {
+router.post('/event/unregister/:eventid', async function (req, res) {
     try {
         if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
         if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']

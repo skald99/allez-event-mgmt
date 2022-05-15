@@ -4,7 +4,7 @@ import { useForm, SubmitHandler, SubmitErrorHandler, Controller } from "react-ho
 import { ErrorMessage } from "@hookform/error-message"
 import Select, { MultiValue } from "react-select";
 import DatePicker from "react-datepicker";
-import { addDays } from "date-fns";
+import { addDays, format } from "date-fns";
 import {useJsApiLoader} from "@react-google-maps/api";
 import { Combobox } from "react-widgets/cjs";
 import usePlacesAutocomplete, { getGeocode, getLatLng, getZipCode } from "use-places-autocomplete";
@@ -26,7 +26,7 @@ type newEventData = {
     category: string[];
     eventTimeStamp: string;
     venue: string;
-
+    
 }
 
 type LatLng = google.maps.LatLngLiteral;
@@ -44,16 +44,64 @@ type EventProps = {
 
 
 const NewEvent: React.FC<EventProps> = ({type}) => {
+    console.log("Check");
     console.log(type)
+    let { eventId } = useParams();
     const [eventData, setEventData] = React.useState<newEventData|undefined>(undefined);
-    const {register, handleSubmit, formState: {errors}, control} = useForm<newEventData>();
+    let catg: {label: string, value: string}[]= [];
+    if(eventData?.category) {
+        eventData.category.forEach(e => {
+            let eCat = {
+                label: e,
+                value: e
+            }
+            catg.push(eCat);
+        })
+    }
+    const {register, handleSubmit, reset, formState: {errors}, control} = useForm<newEventData>({
+        defaultValues: {
+            "name": eventData?.name,
+            "description": eventData?.description,
+            "minAge": eventData?.minAge,
+            "totalSeats": eventData?.totalSeats,
+            "price": eventData?.price,
+            "eventTimeStamp": format(new Date(eventData?.eventTimeStamp!), "MMM DD YYYY")
+        }
+    });
+
+        React.useEffect(() => {
+            async function getEventDetails(eventId: string) {
+                if(type === 1 && eventId) {
+                    let retrievedEvent: AxiosResponse = await axios.get(`http://localhost:4000/events/event?eventId=${eventId}`, {withCredentials: true})
+                    console.log(retrievedEvent);
+                    if(retrievedEvent) {
+                        let {data, status, statusText} = retrievedEvent;
+                        console.log(data);
+                        console.log(status);
+                        console.log(statusText);
+                        setEventData(data.result);
+                        let {address, city, state} = data.result.venue;
+                        setVenue(`${address}, ${city}, ${state}`);
+                    }
+                // }
+                
+                }
+            
+            }
+            if(eventId !== undefined) {
+                getEventDetails(eventId!);
+                
+            }
+        }, [eventId, type])
     
+        React.useEffect(() => {
+            reset(eventData)
+        },[eventData])
     const onErrors: SubmitErrorHandler<newEventData> = data => console.log(data);
     const [venue, setVenue] = React.useState<string>("");
     const [selectedDate, setSelectedDate] = React.useState<Date>();
     const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
     const [eventImages, setEventImages] = React.useState<File[]>([]);
-    let { eventId } = useParams();
     
     const onSubmit: SubmitHandler<newEventData> = async data => {
         let { zipCode, venueCoord } = await getGCAndZip(venue);
@@ -83,30 +131,6 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
         let createdEvent = await axios.post("http://localhost:4000/events/create", newEvent, {withCredentials: true});
         console.log(createdEvent);
     };
-
-    React.useEffect(() => {
-        async function getEventDetails(eventId: string) {
-            if(type === 1 && eventId) {
-                let retrievedEvent: AxiosResponse = await axios.get(`http://localhost:4000/events/event?eventId=${eventId}`, {withCredentials: true})
-                console.log(retrievedEvent);
-                if(retrievedEvent) {
-                    let {data, status, statusText} = retrievedEvent;
-                    console.log(data);
-                    console.log(status);
-                    console.log(statusText);
-                    // setEventData(retrievedEvent);
-                }
-            // }
-            
-        }
-        
-    }
-        if(eventId !== undefined) {
-            getEventDetails(eventId!);
-            
-        }
-    }, [eventId, type])
-
     const { isLoaded } = useJsApiLoader({
         id: "google-script",
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API!,
@@ -114,7 +138,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
         
     })
 
-    const {suggestions: {data, status}, setValue, clearSuggestions, init} = usePlacesAutocomplete({
+    const {suggestions: {data, status}, setValue: setVenueVal , clearSuggestions, init} = usePlacesAutocomplete({
         initOnMount: false,
         requestOptions: {
             componentRestrictions: {
@@ -143,7 +167,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
     }
 
     const handleSelect = (val: string) => {
-            setValue(val, false);
+            setVenueVal(val, false);
             setVenue(val);
             clearSuggestions();
     }
@@ -223,7 +247,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                                             onChange(val);
                                                         }}
                                                         onChange={(val) => {
-                                                            setValue(val);
+                                                            setVenueVal(val);
                                                             if(val === "" ) {
                                                                 onChange(val);
                                                                 setVenue("");
@@ -293,6 +317,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                             render={({field: {onChange}}) => (
                                                 <Select
                                                     id="category"
+                                                    defaultValue={catg}
                                                     options={[
                                                         {value: "Career", label: "Career"},
                                                         {value: "Music", label: "Music"},
