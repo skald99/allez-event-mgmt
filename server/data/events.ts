@@ -324,6 +324,7 @@ async function populateImageUrl(imgIds: string[]) {
 
         let files: GridFSFile[] = await bucket.find({ _id: objId }).toArray()
         await imageChunks()
+        if(files.length===0) return []
         let chunks: Chunk[] = await collections.chunks!.find({ files_id: files![0]._id }).toArray()
         let fileData = []
         for (let chunk of chunks!) {
