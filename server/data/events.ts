@@ -17,11 +17,15 @@ async function createEvent(eventDetails: Event) {
     typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
 
-    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || 
+    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || 
+    !eventDetails.venue.state.trim() || 
     !eventDetails.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
 
-    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
-     isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+    if (isNaN(Number(eventDetails.totalSeats)) || 
+    isNaN(Number(eventDetails.minAge)) || 
+    isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
+     isNaN(Number(eventDetails.venue.geoLocation.long)) ||
+     isNaN(Number(eventDetails.venue.zip))) throw [400, "Events Data Might Not Be Number Where Expected"]
 
     if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || 
     !isNaN(Number(eventDetails.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
@@ -63,14 +67,18 @@ async function createEvent(eventDetails: Event) {
 async function modifyEvent(eventId: string | ObjectId, eventDetails: Event) {
 
     if(typeof(eventDetails.name)!='string' || typeof(eventDetails.venue.address)!='string' || typeof(eventDetails.venue.city)!='string'||
-    typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
+    typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.city)!='string' || typeof(eventDetails.venue.zip)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
 
-    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() || !eventDetails.venue.state.trim() || 
-    !eventDetails.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
+    if (!eventDetails.name.trim() || !eventDetails.venue.address.trim() || !eventDetails.venue.city.trim() ||
+     !eventDetails.venue.state.trim() || !eventDetails.venue.zip.trim()) throw [400, "Event Details Might Be Empty Strings"]
 
-    if (isNaN(Number(eventDetails.totalSeats)) || isNaN(Number(eventDetails.minAge)) || isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
-     isNaN(Number(eventDetails.venue.geoLocation.long))) throw [400, "Events Data Might Not Be Number Where Expected"]
+    if (isNaN(Number(eventDetails.totalSeats)) ||
+     isNaN(Number(eventDetails.minAge)) ||
+      isNaN(Number(eventDetails.venue.geoLocation.lat)) ||
+     isNaN(Number(eventDetails.venue.geoLocation.long)) ||
+     isNaN(Number(eventDetails.venue.zip))
+     ) throw [400, "Events Data Might Not Be Number Where Expected"]
 
     if (!isNaN(Number(eventDetails.venue.address)) || !isNaN(Number(eventDetails.venue.city)) || 
     !isNaN(Number(eventDetails.venue.state))) throw [400, "Event Details Might Be A Number Where Expected A String."]
@@ -102,9 +110,36 @@ async function modifyEvent(eventId: string | ObjectId, eventDetails: Event) {
     }
     await events()
     let eventUpdated = await collections.events?.updateOne({ _id: eventId }, { $set: newEvent });
+
     if (eventUpdated?.modifiedCount === 0) {
         throw [400, "Cannot Update Event"]
     }
+    let requestedEvent = await collections.events?.findOne({ _id: eventId });
+    if(requestedEvent){
+    let modifiedEvent: Event = {
+        "_id": requestedEvent._id,
+        "eventImgs": requestedEvent?.eventImgs,
+        "name": requestedEvent?.name,
+        "category": requestedEvent?.category,
+        "price": Number(requestedEvent?.price),
+        "description": requestedEvent?.description.trim(),
+        "totalSeats": Number(requestedEvent?.totalSeats),
+        "bookedSeats": Number(requestedEvent?.bookedSeats),
+        "minAge": Number(requestedEvent?.minAge),
+        "hostId": requestedEvent?.hostId,
+        "cohostArr": requestedEvent?.cohostArr,
+        "attendeesArr": requestedEvent?.attendeesArr,
+        "venue": {
+            "address": requestedEvent?.venue.address.trim(),
+            "city": requestedEvent?.venue.city.trim(),
+            "state": requestedEvent?.venue.state.trim(),
+            "zip": requestedEvent?.venue.zip.trim(),
+            "geoLocation": { lat: Number(requestedEvent?.venue.geoLocation.lat), long: Number(requestedEvent?.venue.geoLocation.long) }
+        },
+        "eventTimeStamp": requestedEvent?.eventTimeStamp
+    }
+    let modifyStripe = await paymentsData.modifyEvent(modifiedEvent)
+}
     return "Updated The Event Successfully"
 }
 
@@ -253,8 +288,11 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
         if(!ObjectId.isValid(ids.eventId.toString())) throw [400, "Event ID Is Invalid"]
 
         let neweventId = new ObjectId(ids.eventId.toString().trim())
+
         let requestedEvent = await collections.events?.findOne({ _id: neweventId });
+
         requestedEvent!._id = requestedEvent!._id.toString()
+        // requestedEvent.
         if (requestedEvent === null) throw [400, 'Event Not Found'];
         if (requestedEvent?.eventImgs) {
             let imgIds: string[] = requestedEvent?.eventImgs
@@ -262,6 +300,7 @@ async function getbyId(ids: { eventId?: string | ObjectId, hostId?: string | Obj
         }
         requestedEvent!.eventImgs = imageUrls
         return requestedEvent
+        
     }
     else if (ids.hostId) {
         if(!ObjectId.isValid(ids.hostId.toString())) throw [400, "Host ID Is Invalid"]

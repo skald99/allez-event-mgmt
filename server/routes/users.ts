@@ -1,4 +1,5 @@
 import express from 'express';
+
 import firestoreDb from "../app";
 import { User } from '../models/user.model';
 import bcrypt from "bcrypt";
@@ -6,8 +7,7 @@ const router = express.Router();
 import data from "../data";
 const usersData = data.usersData;
 const xss = require('xss');
-
-const bcryptRounds: number = 10; 
+const bcryptRounds: number = 10; // used for encrypting the password using bcrypt
 
 router.get("/logout", async(req, res) => {
     try{
@@ -41,6 +41,7 @@ router.post("/login", async(req, res) => {
         if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Login Details Might Be Empty"]
         let email: string = xss(req.body.email.trim());
         let password: string = xss(req.body.password.trim());
+        // const hashPassword = await bcrypt.hash(password, bcryptRounds)
         // retrieve if there is data with the given email
         
         let userId = null;

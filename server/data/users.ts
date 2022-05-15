@@ -3,9 +3,6 @@ import { ObjectId } from "mongodb";
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
 import { User } from "../models/user.model";
-import bcrypt from "bcrypt";
-
-const bcryptRounds: number = 10; // used for encrypting the password using bcrypt
 
 /**
  * This function is only for internal purpose
@@ -46,7 +43,7 @@ async function createUser(person : User) {
      !person.address.country.trim() ) throw [400, "Registration Details Might Be Empty Strings"]
 
      if(isNaN(Number(person.phone)))throw [400, "Phone Number Is Not Number"]
-
+     if(isNaN(Number(person.address.postal_code))) throw [400, "ZIP Is Not Number"]
      if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
      !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
      !isNaN(Number(person.email))
@@ -91,9 +88,9 @@ async function createUser(person : User) {
  */
 async function modifyUser(person : User) {
     if(typeof(person.name)!='string'||typeof(person.gender)!='string'||typeof(person.email)!='string'||
+    typeof(person.address.postal_code)!='string'||
     typeof(person.address.city)!='string'||
     typeof(person.address.state)!='string'||
-    typeof(person.address.postal_code)!='string'||
     typeof(person.address.country)!='string') throw [400, "Updation Details Not In String Format"]
 
     if(!person.name.trim() || !person.gender.trim() || !person.email.trim()  || 
@@ -101,7 +98,7 @@ async function modifyUser(person : User) {
      !person.address.country.trim() ) throw [400, "Updation Details Might Be Empty Strings"]
 
      if(isNaN(Number(person.phone)))throw [400, "Phone Number Is Not Number"]
-
+     if(isNaN(Number(person.address.postal_code))) throw [400, "ZIP Is Not Number"]
      if( !isNaN(Number(person.name)) || !isNaN(Number(person.address.city)) || !isNaN(Number(person.address.state)) ||
     !isNaN(Number( person.address.country)) || !isNaN(Number(person.gender)) ||
      !isNaN(Number(person.email))
