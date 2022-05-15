@@ -3,7 +3,7 @@ import { useForm, SubmitHandler, SubmitErrorHandler } from "react-hook-form";
 import { ErrorMessage } from "@hookform/error-message"
 import axios from "axios";
 
-const LoginForm = (props: {className: string}) => {
+const LoginForm = (props: {className: string, userStatus: (status: number) => void}) => {
 
     type login = {
         email: string
@@ -12,15 +12,23 @@ const LoginForm = (props: {className: string}) => {
 
     const {register, handleSubmit, formState: {errors}} = useForm<login>();
     const onSubmit: SubmitHandler<login> = async data => {
-        let user = await axios.post("http://localhost:4000/users/login", data)
+        let user = await axios.post("http://localhost:4000/users/login", data, {withCredentials: true})
         console.log(user);
+        if(user.status === 200 && user.statusText === "OK") {
+            window.sessionStorage.setItem("userId", user.data.userId);
+            // console.log(window.sessionStorage.getItem("userId"));
+            props.userStatus(200);
+        }
     };
     const onErrors: SubmitErrorHandler<login> = data => console.log(data);
     
     return(
         <div className={`w-full ${props.className} overflow-y-hidden`}>
             <form onSubmit={handleSubmit(onSubmit, onErrors)} className="px-8 pt-6 pb-8 mx-6 mb-4 bg-white rounded shadow-md h-[48em]">
-                <div className="mb-6">
+            <h1 className="flex justify-center mb-10 font-sans text-4xl font-bold text-gray-700 mt-28">
+                    Login
+                </h1>
+                <div className="mx-5 mb-6">
                     <div className="md:flex md:items-center">
                         <div className="md:w-1/4">
                             <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="username">Email/Username: </label>
@@ -40,7 +48,8 @@ const LoginForm = (props: {className: string}) => {
                         )}
                     />
                 </div>
-                <div className="mb-6">
+                <br/>
+                <div className="mx-5 mb-6">
                     <div className="md:flex md:items-center">
                         <div className="md:w-1/4">
                             <label className="block pr-4 mb-0 text-sm font-bold text-gray-700 md:text-left" htmlFor="password">Password: </label>

@@ -5,7 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "start": "ts-node-dev --respawn --transpile-only app.ts",
-    "seed": "ts-node ./task/seed.ts",
+    "seed": "ts-node-dev ./task/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

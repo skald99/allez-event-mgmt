@@ -16,7 +16,6 @@ function newUser(): User {
   phoneStr = phoneStr.replace("-", "");
   const phone: number = parseInt(phoneStr)
   const dateOfBirth: Date = faker.date.past();
-  const password: string = faker.internet.password()
   const gender: string = faker.helpers.arrayElement(['M','F']);
   const city: string = faker.address.cityName();
   const state: string = faker.address.state();

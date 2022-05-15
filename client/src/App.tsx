@@ -8,11 +8,11 @@ import Home from "./components/Home"
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import EventDetails from './components/EventDetails';
+import RegisteredEvents from './components/RegisteredEvents';
 import Auth from "./components/Auth";
 function App() {
   return (
     <div className="App">
-      <script src="../path/to/flowbite/dist/flowbite.js"></script>
       <Router>
         <header >
           <Navigation />
@@ -31,12 +31,14 @@ function App() {
             </Route>
 
             <Route path='/eventDashBoard' element={<EventDashboard />} />
+            <Route path='/registeredEvents' element={<RegisteredEvents />}/>
             {/* <Route path='/event/:eventId' element={<EventDetails />} /> */}
           </Routes>
 
           {/* <NewEvent type={EventType.NEW}/> */}
         </div>
       </Router>
+      <script src="../path/to/flowbite/dist/flowbite.js"></script>
     </div>
   );
 }

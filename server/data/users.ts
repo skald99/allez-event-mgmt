@@ -152,7 +152,19 @@ async function getHostedEvents(id : string) {
 
     if(requestedUser == null) throw [404,'could not find the requested user']; // if the data returned is null throw an error
     
-    return requestedUser.hostEventArray;
+    let hostedEventIds = requestedUser.hostEventArray
+    let hostedEventIds_parsed:ObjectId[] = []
+    for(let id of hostedEventIds){
+        let id_new:ObjectId = new ObjectId(id)
+        hostedEventIds_parsed.push(id_new)
+    }
+    let events = await collections.events?.find({_id: {$in: hostedEventIds_parsed}}).toArray()
+    if(events?.length === 0) return []
+
+    for(let event of events!){
+        event._id = event._id.toString()
+    }
+    return events;
 }
 
 /**
@@ -169,9 +181,21 @@ async function getRegisteredEvents(id: string) {
 
     let requestedUser = await collections.users?.findOne({_id: parseId}); // finds the requestedUser using id
 
-    if(requestedUser == null) throw [404,'could not find the requested user']; // if the data returned is null throw an error
-    
-    return requestedUser.attendEventArray;
+    if(requestedUser == null) throw [400,'could not find the requested user']; // if the data returned is null throw an error
+    let registeredEventIds = requestedUser.attendEventArray
+    let registeredEventIds_parsed:ObjectId[] = []
+    for(let id of registeredEventIds){
+        let id_new:ObjectId = new ObjectId(id)
+        registeredEventIds_parsed.push(id_new)
+    }
+    await events()
+    let eventList = await collections.events?.find({_id: {$in: registeredEventIds_parsed}}).toArray()
+    if(eventList?.length === 0) return []
+
+    for(let event of eventList!){
+        event._id = event._id.toString()
+    }
+    return eventList;
 }
 
 /**

@@ -14,7 +14,8 @@ import "react-widgets/styles.css";
 import Map from "./Map";
 import ImageModal from "./ImageModal";
 import Event from "../models/events.model";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+import { useParams } from "react-router-dom";
 
 type newEventData = {
     name: string;
@@ -22,7 +23,6 @@ type newEventData = {
     description: string;
     totalSeats: number;
     minAge: number;
-    active: boolean;
     category: string[];
     eventTimeStamp: string;
     venue: string;
@@ -53,6 +53,7 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
     const [selectedDate, setSelectedDate] = React.useState<Date>();
     const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
     const [eventImages, setEventImages] = React.useState<File[]>([]);
+    let { eventId } = useParams();
     
     const onSubmit: SubmitHandler<newEventData> = async data => {
         let { zipCode, venueCoord } = await getGCAndZip(venue);
@@ -78,14 +79,33 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
             eventTimeStamp: data.eventTimeStamp,
             eventImgs: eventImages
         }
-
-        let createdEvent = await axios.post("http://localhost:4000/events/create", newEvent);
-        
+        console.log(newEvent);
+        let createdEvent = await axios.post("http://localhost:4000/events/create", newEvent, {withCredentials: true});
         console.log(createdEvent);
     };
-    if(type) {
+
+    React.useEffect(() => {
+        async function getEventDetails(eventId: string) {
+            if(type === 1 && eventId) {
+                let retrievedEvent: AxiosResponse = await axios.get(`http://localhost:4000/events/event?eventId=${eventId}`, {withCredentials: true})
+                console.log(retrievedEvent);
+                if(retrievedEvent) {
+                    let {data, status, statusText} = retrievedEvent;
+                    console.log(data);
+                    console.log(status);
+                    console.log(statusText);
+                    // setEventData(retrievedEvent);
+                }
+            // }
+            
+        }
         
     }
+        if(eventId !== undefined) {
+            getEventDetails(eventId!);
+            
+        }
+    }, [eventId, type])
 
     const { isLoaded } = useJsApiLoader({
         id: "google-script",
@@ -375,13 +395,6 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                             <small className="mb-6 text-red-400">{message}</small>
                                             )}
                                 />
-                                </div>
-                                <div className="mx-4 mt-9">
-                                    <label htmlFor="active" className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="active" value={""} className="sr-only peer" {...register("active")}/>
-                                        <div className="h-6 bg-gray-200 border-2 border-gray-200 rounded-full w-11 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:h-5 after:w-5 after:shadow-sm after:rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600 peer-checked:border-blue-600 after:transition-all after:duration-300"></div>
-                                        <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Active</span>
-                                    </label>
                                 </div>
                             </div>
                             <br/>
