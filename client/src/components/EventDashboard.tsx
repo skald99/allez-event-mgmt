@@ -26,12 +26,23 @@ const EventList = () => {
     const [cityFilter, setCityFilter] = useState<string[]>([])
     const [stateOptions, setStateOptions] = useState<OptionType[]>()
     const [cityOptions, setCityOptions] = useState<OptionType[]>()
+    const [loading,setLoading] = useState<boolean>(false)
     let card
 
-    if (events.length == 0) axios.get('http://localhost:4000/events/').then(({ data }) => {
-        setEvents(data.result)
-        setDisplayEvents(data.result)
-    })
+
+
+    useEffect(() => {
+        async function fetchEventList() {
+            setLoading(true)
+            await axios.get('http://localhost:4000/events/',{withCredentials: true}).then(({ data }) => {
+                setEvents(data.result)
+                setDisplayEvents(data.result)
+                setLoading(false)
+            })
+        }
+        console.log('inside use effect')
+        fetchEventList()
+    }, [])
 
     const handleSearchTextChange = (e: React.FormEvent<HTMLInputElement>) => {
 
@@ -56,20 +67,34 @@ const EventList = () => {
             let cityOptions = getCityOptions(results)
             setCityOptions(cityOptions)
         }
-        else if(stateFilter.length === 0) setCityOptions([])
+        else if (stateFilter.length === 0) setCityOptions([])
         if (cityFilter.length > 0) results = filterByCity(results)
         setDisplayEvents(results)
     }, [searchTerm, costFilter, filteredCategories, stateFilter, cityFilter]);
 
 
-    if (events.length == 0) {
-        return <p>No events to display</p>
+    if(loading){
+        return (
+            <div>
+                <h2>
+                    Loading
+                </h2>
+            </div>
+        )
+    }
+
+    if (events.length == 0 && !loading) {
+        return (
+            <div>
+                <h2>No events to display</h2>
+            </div>
+        )
     }
 
     function filterBySearchText() {
         let results: eventModel[] = []
         for (let event of events) {
-            if (event.name.includes(searchTerm)) results.push(event)
+            if (event.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase())) results.push(event)
         }
         return results
     }
@@ -84,7 +109,7 @@ const EventList = () => {
     }
 
     function filterByCategories(curEvents: eventModel[]) {
-        let results:eventModel[] = []
+        let results: eventModel[] = []
         for (let eve of curEvents) {
             let categories = eve.category
             for (let cat of categories) {
@@ -156,22 +181,26 @@ const EventList = () => {
     ]
 
     const buildCard = (event: eventModel) => {
-        let imgSrc = (event.eventImgs.length > 0) ? event.eventImgs.at(0):noImage
+
+        let imgSrc = (event.eventImgs.length > 0) ? event.eventImgs.at(0) : noImage
         console.log(imgSrc)
         return (
             <div className="max-w-sm rounded overflow-hidden shadow-lg">
-                <img className="w-full" src={imgSrc as string} />
-                <div className="px-6 py-4">
-                    <div className="font-bold text-xl mb-2">{event.name}</div>
-                    <p className="text-gray-700 text-base">
-                        {event.description}
-                    </p>
-                </div>
-                <div className="px-6 pt-4 pb-2">
-                    {event.category.map((cat) => {
-                        return <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{cat}</span>
-                    })}
-                </div>
+                <Link to={`/events/${event._id}`}>
+                    <img className="w-full" src={imgSrc as string} />
+                    <div className="px-6 py-4">
+                        <div className="font-bold text-xl mb-2">{event.name}</div>
+                        <p className="text-gray-700 text-base">
+                            {event.description}
+                        </p>
+                    </div>
+                    <div className="px-6 pt-4 pb-2">
+                        {event.category.map((cat) => {
+                            return <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{cat}</span>
+                        })}
+                    </div>
+                </Link>
+
             </div>
         )
     }
@@ -189,8 +218,8 @@ const EventList = () => {
         <div className='mx-8'>
             <div className="flex items-center justify-between mt-4">
                 <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Event DashBoard</h2>
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-md" onClick={()=>{
-                    
+                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-md" onClick={() => {
+
                 }}>
                     Reset Filter
                 </button>
