@@ -18,6 +18,7 @@ import { Event } from '../models/events.model';
 import { ObjectId } from 'mongodb';
 import firestoreDb from "../app";
 import { faker } from "@faker-js/faker";
+import { event } from 'firebase-functions/v1/analytics';
 
 async function* asyncGenerator(num: number) {
   let i = 0;
@@ -40,6 +41,7 @@ async function seedData(num: number) {
     console.log("Starting to Create Users...");
     const userEventLog: UserEvent[] = [];
     const eventIds: string[] = [];
+    const userIds: string[] = [];
     const login: {email:string, password:string}[] = [];
         for (let i = 0; i < num; i++) {
         let tempUser: User = newUser();
@@ -52,6 +54,7 @@ async function seedData(num: number) {
               password: password,
               userId: tmp._id
           });
+          userIds.push(tmp._id.toString());
             userEventLog.push({id: tmp._id as string, attendArr: tmp.attendEventArray, hostArr: tmp.hostEventArray});
             let tempEvent1 = newEvent();
             let tempEvent2 = newEvent();
@@ -60,11 +63,28 @@ async function seedData(num: number) {
             let finalEvent2: Event = {...tempEvent2, hostId: hostId}
             console.log("-------------------------------------");
             console.log("Adding events to users");
+
+            // events for hosts are created
             let event = await eventFunctions.createEvent(finalEvent1);
             let addEvent1InUserCollection = await userFunctions.addHostedEvent(hostId, event._id.toString());
 
             let event2 = await eventFunctions.createEvent(finalEvent2);
             let addEvent2InUserCollection = await userFunctions.addHostedEvent(hostId, event2._id.toString());
+
+            // add cohosts for the events
+            if(userIds.length > 1) {
+              let addCoHosts = await eventFunctions.addCohost(event._id, userIds[i-1]);
+              let addEventInUserCollection = await userFunctions.addHostedEvent(userIds[i-1], event._id.toString());
+            }
+
+            // add participants for the events
+            if(userIds.length>2) {
+              for(let j=0; j<userIds.length-2; j++) {
+                let addattendees = await eventFunctions.addAttendee(event._id, userIds[j]);
+                let addEventInUserCollection = await userFunctions.addRegisteredEvent(userIds[j], event._id.toString());
+              }
+            }
+
             console.log("Check22");
             console.log(typeof event?._id);
             eventIds.push(event?._id.toString()!, event2?._id.toString()!);

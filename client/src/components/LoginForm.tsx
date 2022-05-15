@@ -12,7 +12,7 @@ const LoginForm = (props: {className: string}) => {
 
     const {register, handleSubmit, formState: {errors}} = useForm<login>();
     const onSubmit: SubmitHandler<login> = async data => {
-        let user = await axios.post("http://localhost:4000/users/login", data)
+        let user = await axios.post("http://localhost:4000/users/login", data, {withCredentials: true})
         console.log(user);
     };
     const onErrors: SubmitErrorHandler<login> = data => console.log(data);

@@ -41,7 +41,7 @@ router.post('/create', upload.any(), async (req, res) => {
     //Sample url:
     // http://localhost:4000/events/create
     let obj: Event = req.body;
-    obj.hostId = req.session.userId;
+    if(req.session.userId) obj.hostId = req.session.userId?.toString();
     let imgArr: string[] = []
     req.files?.forEach((file: Express.Multer.File) => {
         imgArr.push(file.id.toString())
