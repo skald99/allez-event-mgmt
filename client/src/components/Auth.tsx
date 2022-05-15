@@ -19,7 +19,7 @@ const Auth = () => {
                 <LoginForm className="overflow-y-auto transition-all ease-in blur-sm hover:filter-none place-content-center focus-within:filter-none" userStatus = {userStat}/>
             </div>
             <div>
-                <SignupForm className="overflow-y-auto transition-all ease-in blur-sm hover:filter-none place-content-center focus-within:filter-none"/>
+                <SignupForm className="overflow-y-auto transition-all ease-in blur-sm hover:filter-none place-content-center focus-within:filter-none" userStatus = {userStat}/>
             </div>
         </div>
     )
