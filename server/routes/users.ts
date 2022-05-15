@@ -1,10 +1,13 @@
 import express from 'express';
 import firestoreDb from "../app";
 import { User } from '../models/user.model';
+import bcrypt from "bcrypt";
 const router = express.Router();
 import data from "../data";
 const usersData = data.usersData;
 const xss = require('xss');
+
+const bcryptRounds: number = 10; 
 
 router.get("/logout", async(req, res) => {
     try{
@@ -40,17 +43,22 @@ router.post("/login", async(req, res) => {
         let password: string = xss(req.body.password.trim());
         // retrieve if there is data with the given email
         
-        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).where("password", "==", password).get();
         let userId = null;
+        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).get();
+
         if(querySnapshot.docs[0]){
 
+            let storedPassword = querySnapshot.docs[0].data().password
+            let compare = await bcrypt.compare(password, storedPassword)
+            console.log(compare)
+            if(!compare) throw [400, "Either email or password are invalid."];
             let getUserDetails = await usersData.getUser(xss(querySnapshot.docs[0].data().userId));
-            
             req.session.userId = querySnapshot.docs[0].data().userId;
             req.session.userName = getUserDetails.name;
             userId = req.session.userId;
+            
         }else throw [400, "Either email or password are invalid."];
-
+        
         res.status(200).json({ "success": true, "result": "successful in login", "userId": userId });
         return;
     }catch(e: ?){
@@ -65,17 +73,19 @@ router.post("/signup", async(req, res) => {
         console.log(user)
         console.log(password)
         if(typeof(user.name)!='string'||typeof(user.gender)!='string'||typeof(user.email)!='string'||
+        typeof(user.address.postal_code) !='string' ||
         typeof(user.address.city)!='string'||
         typeof(user.address.state)!='string'||
-        typeof(user.address.postal_code)!='string'||
-        typeof(user.address.country)!='string') throw [400, "Registration Details Not In String Format"]
+        typeof(user.address.country)!='string' ||
+        typeof(password)!='string') throw [400, "Registration Details Not In String Format"]
 
         if(!user.name.trim() || !user.gender.trim() || !user.email.trim()  || 
-        !user.address.city.trim() || !user.address.state.trim() || !user.address.postal_code.trim() ||
-         !user.address.country.trim() ) throw [400, "Registration Details Might Be Empty Strings"]
+        !user.address.city.trim() || !user.address.state.trim() || !user.address.postal_code ||
+         !user.address.country.trim() ||
+         !password.trim()) throw [400, "Registration Details Might Be Empty Strings"]
 
          if(isNaN(Number(user.phone)))throw [400, "Phone Number Is Not Number"]
-
+         if(isNaN(Number(user.address.postal_code))) throw [400, "ZIP Is Not Number"]
          if( !isNaN(Number(user.name.trim())) || !isNaN(Number(user.address.city.trim())) || !isNaN(Number(user.address.state.trim())) ||
         !isNaN(Number( user.address.country.trim())) || !isNaN(Number(user.gender.trim())) ||
          !isNaN(Number(user.email.trim()))
@@ -85,7 +95,7 @@ router.post("/signup", async(req, res) => {
             "address": {
                 "city": xss(user.address.city.trim()),
                 "state": xss(user.address.state.trim()),
-                "postal_code": xss(user.address.postal_code.trim()),
+                "postal_code": xss(Number(user.address.postal_code)),
                 "country": xss(user.address.country.trim())
             },
             "phone": xss(Number(user.phone)),
@@ -97,39 +107,44 @@ router.post("/signup", async(req, res) => {
         }
 
         let newlyCreatedUser = await usersData.createUser(newUser);
-
+        if(!newlyCreatedUser) throw [500, "User cannot be signed up."]
+        const hashPassword = await bcrypt.hash(password.trim(), bcryptRounds)
         const querySnapshot = await firestoreDb.collection("users").add({
             email: user.email.trim(),
-            password: password.trim(),
+            password: hashPassword,
             userId: newlyCreatedUser._id
         });
+
+        req.session.userId = newlyCreatedUser._id.toString();
+        req.session.userName = newlyCreatedUser.name;
 
         return res.status(200).json({ "success": true, "newUser": newlyCreatedUser, "firestoreId": querySnapshot.id});
         //return;
     }catch(e: ?){
         console.log(e)
         res.status(e[0]).json({ "success": false, "result": e[1]})
-        //return;
+        return;
     }
     return;
 })
 
 router.put("/", async(req, res) => {
     try{
+        if(!req.session.userId) throw [400, "User Not Logged In"]
         if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email)!='string'||
         typeof(req.body.address.city)!='string'||
+        typeof(req.body.address.postal_code) !='string' ||
         typeof(req.body.address.state)!='string'||
-        typeof(req.body.address.postal_code)!='string'||
         typeof(req.body.address.country)!='string'||
         typeof(req.body.password)!='string') throw [400, "Updation Details Not In String Format"]
 
         if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim()  || 
-        !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code.trim() ||
+        !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code ||
          !req.body.address.country.trim() 
          || !req.body.trim()) throw [400, "Updation Details Might Be Empty Strings"]
 
          if(isNaN(Number(req.body.phone)))throw [400, "Phone Number Is Not Number"]
-
+        if(isNaN(Number(req.body.address.postal_code))) throw [400, "ZIP Is Not Number"]
          if( !isNaN(Number(req.body.name.trim())) || !isNaN(Number(req.body.address.city.trim())) || !isNaN(Number(req.body.address.state.trim())) ||
             !isNaN(Number(req.body.address.country.trim())) || 
             !isNaN(Number(req.body.gender.trim())) ||
@@ -142,7 +157,7 @@ router.put("/", async(req, res) => {
             "address": {
                 "city": xss(req.body.address.city.trim()),
                 "state": xss(req.body.address.state.trim()),
-                "postal_code": xss(req.body.address.postal_code.trim()),
+                "postal_code": xss(Number(req.body.address.postal_code)),
                 "country": xss(req.body.address.country.trim())
             },
             "phone": xss(Number(req.body.phone)),
@@ -178,6 +193,7 @@ router.put("/", async(req, res) => {
 
 router.get("/HostedEvents", async(req, res) => {
     try{
+        if(!req.session.userId) throw [400, "User Not Logged In"]
         let hostedEvents = await usersData.getHostedEvents(xss(req.session.userId));
         console.log(hostedEvents);
         res.status(200).json({ "success": true, "result": hostedEvents });
@@ -190,6 +206,7 @@ router.get("/HostedEvents", async(req, res) => {
 
 router.get("/RegisteredEvents", async(req, res) => {
     try{
+        if(!req.session.userId) throw [400, "User Not Logged In"]
         let registeredEvents = await usersData.getRegisteredEvents(xss(req.session.userId));
         console.log('test')
         console.log(registeredEvents);
@@ -201,30 +218,37 @@ router.get("/RegisteredEvents", async(req, res) => {
 
 router.post("/changepassword", async(req, res) => {
     try{
+        if(!req.session.userId) throw [400, "User Not Logged In"]
         if(typeof(req.body.oldPassword)!='string'||typeof(req.body.newPassword)!='string') throw [400, "Passwords Not In String"]
         if(!req.body.oldPassword.trim() || !req.body.newPassword.trim() ) throw [400, "Passwords Might Be Empty Strings"]
 
         let oldPassword: string = req.body.oldPassword.trim()
         let newPassword: string = req.body.newPassword.trim();
-        // let userId: string;
-        // if(req.session.userId) {
-        //     let userId = req.session.userId;
-        // }
+        let userId: string = req.session.userId;
+        // const hasholdPassword = await bcrypt.hash(oldPassword.trim(), bcryptRounds)
+        const hashnewPassword = await bcrypt.hash(newPassword.trim(), bcryptRounds)
+        console.log("userId", userId);
 
-        //console.log("userId", userId);
+        // const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", userId).where("password", "==", hasholdPassword).get();
+        const querySnapshot = await firestoreDb.collection("users").where("userId", "==", userId).get();
 
-        const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", req.session.userId).where("password", "==", oldPassword).get();
-        if(!prequerySnapshot.docs[0]) throw [400,"Old Password is incorrect."];
+        if(querySnapshot.docs[0]){
 
-        const firebaseId = prequerySnapshot.docs[0].id;
+            let storedPassword = querySnapshot.docs[0].data().password
+            let compare = await bcrypt.compare(oldPassword, storedPassword)
+            console.log(compare)
+            if(!compare) throw [400, "Password is invalid."]; 
+            const firebaseId = querySnapshot.docs[0].id;
 
-        const querySnapshot = await firestoreDb.collection("users").doc(firebaseId).update({
-            "password": newPassword,
-        });
-
+            const changequerySnapshot = await firestoreDb.collection("users").doc(firebaseId).update({
+                "password": hashnewPassword,
+            });
+        }
+        else throw [400,"User doesn't exist."];
         console.log(querySnapshot);
         res.status(200).json({"success": true, "result": "password changed successfully"});
         return;
+
     }catch(e: ?){
         console.log(e);
         res.status(e[0]).json({ "success": false, "result": e[1]})
@@ -234,6 +258,7 @@ router.post("/changepassword", async(req, res) => {
 
 router.delete("/", async(req, res) => {
     try{
+        if(!req.session.userId) throw [400, "User Not Logged In"]
         let deleteRequestedUser = await usersData.deleteUser(xss(req.session.userId));
         const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", req.session.userId).get();
         const firebaseId = prequerySnapshot.docs[0].id;
@@ -249,4 +274,4 @@ router.delete("/", async(req, res) => {
     }
 })
 
-export default router; 
+export default router;
