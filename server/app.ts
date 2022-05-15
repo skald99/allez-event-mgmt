@@ -8,7 +8,7 @@ import configRoutes from "./routes";
 import xss from "xss";
 
 const app = express();
-app.use(cors({credentials: true}))
+app.use(cors({credentials: true, origin: "http://localhost:3000"}))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({credentials: true}));
@@ -18,6 +18,12 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }))
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 
 /**
  * Middleware Functions
@@ -29,17 +35,18 @@ app.use("*", (req, res, next) => {
 
 let regex = "^\/users(\/login|\/signup)?(\/)?$";
 let shouldAuthenticate = true;
-app.post(regex, (req, res, next) => {
-    if(req.session.userId)
-        return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
-    shouldAuthenticate = false;
-    next();
-});
-app.use('*', (req, res, next) => {
-    if(shouldAuthenticate && !req.session.userId)
-        return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
-    next();
-});
+// app.post(regex, (req, res, next) => {
+//     if(req.session.userId)
+//         console.log("coming here");
+//         return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
+//     shouldAuthenticate = false;
+//     next();
+// });
+// app.use('*', (req, res, next) => {
+//     if(shouldAuthenticate && !req.session.userId)
+//         return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
+//     next();
+// });
 app.use('*', (req, res, next) => {
     if(req.body) {
         for(let param in req.body) {
