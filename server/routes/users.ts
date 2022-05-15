@@ -41,17 +41,17 @@ router.post("/login", async(req, res) => {
         // retrieve if there is data with the given email
         
         const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).where("password", "==", password).get();
-        
+        let userId = null;
         if(querySnapshot.docs[0]){
 
             let getUserDetails = await usersData.getUser(xss(querySnapshot.docs[0].data().userId));
             
             req.session.userId = querySnapshot.docs[0].data().userId;
             req.session.userName = getUserDetails.name;
-            
+            userId = req.session.userId;
         }else throw [400, "Either email or password are invalid."];
 
-        res.status(200).json({ "success": true, "result": "successful in login" });
+        res.status(200).json({ "success": true, "result": "successful in login", "userId": userId });
         return;
     }catch(e: ?){
         res.status(e[0]).json({ "success": false, "result": e[1]})
