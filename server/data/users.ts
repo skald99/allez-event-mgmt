@@ -3,9 +3,6 @@ import { ObjectId } from "mongodb";
 import { collections, users, events } from "../config/mongoCollections";
 import * as mongoConnection from "../config/mongoConnection";
 import { User } from "../models/user.model";
-import bcrypt from "bcrypt";
-
-const bcryptRounds: number = 10; // used for encrypting the password using bcrypt
 
 /**
  * This function is only for internal purpose

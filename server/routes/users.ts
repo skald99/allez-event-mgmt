@@ -1,10 +1,14 @@
 import express from 'express';
+
 import firestoreDb from "../app";
 import { User } from '../models/user.model';
 const router = express.Router();
 import data from "../data";
 const usersData = data.usersData;
 const xss = require('xss');
+const bcryptRounds: number = 10; // used for encrypting the password using bcrypt
+
+import bcrypt from "bcrypt";
 
 router.get("/logout", async(req, res) => {
     try{
@@ -37,9 +41,10 @@ router.post("/login", async(req, res) => {
         if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Login Details Might Be Empty"]
         let email: string = xss(req.body.email.trim());
         let password: string = xss(req.body.password.trim());
+        const hashPassword = await bcrypt.hash(password, bcryptRounds)
         // retrieve if there is data with the given email
         
-        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).where("password", "==", password).get();
+        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).where("password", "==", hashPassword).get();
         
         if(querySnapshot.docs[0]){
 
@@ -67,11 +72,13 @@ router.post("/signup", async(req, res) => {
         typeof(user.address.city)!='string'||
         typeof(user.address.state)!='string'||
         typeof(user.address.postal_code)!='string'||
-        typeof(user.address.country)!='string') throw [400, "Registration Details Not In String Format"]
+        typeof(user.address.country)!='string' ||
+        typeof(password)!='string') throw [400, "Registration Details Not In String Format"]
 
         if(!user.name.trim() || !user.gender.trim() || !user.email.trim()  || 
         !user.address.city.trim() || !user.address.state.trim() || !user.address.postal_code.trim() ||
-         !user.address.country.trim() ) throw [400, "Registration Details Might Be Empty Strings"]
+         !user.address.country.trim() ||
+         !password.trim()) throw [400, "Registration Details Might Be Empty Strings"]
 
          if(isNaN(Number(user.phone)))throw [400, "Phone Number Is Not Number"]
 
@@ -96,10 +103,10 @@ router.post("/signup", async(req, res) => {
         }
 
         let newlyCreatedUser = await usersData.createUser(newUser);
-
+        const hashPassword = await bcrypt.hash(password.trim(), bcryptRounds)
         const querySnapshot = await firestoreDb.collection("users").add({
             email: user.email.trim(),
-            password: password.trim(),
+            password: hashPassword,
             userId: newlyCreatedUser._id
         });
 
@@ -207,16 +214,17 @@ router.post("/changepassword", async(req, res) => {
         let oldPassword: string = req.body.oldPassword.trim()
         let newPassword: string = req.body.newPassword.trim();
         let userId: string = req.session.userId;
-
+        const hasholdPassword = await bcrypt.hash(oldPassword.trim(), bcryptRounds)
+        const hashnewPassword = await bcrypt.hash(newPassword.trim(), bcryptRounds)
         console.log("userId", userId);
 
-        const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", userId).where("password", "==", oldPassword).get();
+        const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", userId).where("password", "==", hasholdPassword).get();
         if(!prequerySnapshot.docs[0]) throw [400,"Old Password is incorrect."];
 
         const firebaseId = prequerySnapshot.docs[0].id;
 
         const querySnapshot = await firestoreDb.collection("users").doc(firebaseId).update({
-            "password": newPassword,
+            "password": hashnewPassword,
         });
 
         console.log(querySnapshot);
