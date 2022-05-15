@@ -1,12 +1,8 @@
-import { ObjectID } from "bson";
 import { GridFSBucket, GridFSFile, GridFSBucketReadStream } from "mongodb";
-import { GridFile, GridFsStorage, UrlStorageOptions } from 'multer-gridfs-storage'
 import { ObjectId } from "mongodb";
 import { collections, users, events, eventImages, imageChunks } from "../config/mongoCollections";
 import { Event } from "../models/events.model";
 import { Chunk } from "../models/chunks.model";
-import mongo from "mongodb"
-import grid from "gridfs-stream"
 import usersdata from "./users";
 import paymentsData from "./payments"
 import { connectDB } from "../config/mongoConnection";
@@ -113,9 +109,8 @@ async function modifyEvent(eventId: string | ObjectId, eventDetails: Event) {
 }
 
 async function deleteEvent(eventId: string | ObjectId) {
-    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
-
-    eventId = new ObjectID(eventId.toString().trim())
+    if (!/[0-9A-Fa-f]{24}/.test(eventId.toString().trim())) throw "Provided id is not a valid ObjectId";
+    eventId = new ObjectId(eventId.toString().trim())
     await events()
     let removingEvent = await collections.events?.findOne({ _id: eventId });
     if (removingEvent) removingEvent._id = removingEvent._id.toString();
@@ -338,7 +333,6 @@ async function populateImageUrl(imgIds: string[]) {
         result.push(fileUrl)
 
     }
-    console.log(result)
     return result
 }
 
