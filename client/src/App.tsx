@@ -8,6 +8,7 @@ import Home from "./components/Home"
 import EventDetails from './components/EventDetails';
 import RegisteredEvents from './components/RegisteredEvents';
 import Auth from "./components/Auth";
+import Error from './components/PageNotFound'
 function App() {
   return (
     <div className="App">
@@ -29,6 +30,8 @@ function App() {
 
             <Route path='/eventDashBoard' element={<EventDashboard />} />
             <Route path='/registeredEvents' element={<RegisteredEvents />}/>
+            <Route path='/error' element={<Error />} />
+            <Route path='*' element={<Error />} />
           </Routes>
 
         </div>
