@@ -6,7 +6,8 @@ import express from 'express';
 import session from "express-session";
 import configRoutes from "./routes";
 import xss from "xss";
-
+const regex = "^\/users(\/login|\/signup)?(\/)?$";
+let shouldAuthenticate = true;
 const app = express();
 app.use(cors({credentials: true, origin: "http://localhost:3000"}))
 app.use(express.json());
@@ -33,8 +34,7 @@ app.use("*", (req, res, next) => {
     next();
 });
 
-let regex = "^\/users(\/login|\/signup)?(\/)?$";
-let shouldAuthenticate = true;
+
 app.post(regex, (req, res, next) => {
     if(req.session.userId)
         return res.status(401).json({ "success": false, "result": 'user is already logged in.'});
