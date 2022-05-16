@@ -39,13 +39,13 @@ router.post("/login", async(req, res) => {
         if(req.session.userId) throw [400, "user is already loggedin."];
         if(typeof(req.body.email)!='string'||typeof(req.body.password)!='string') throw [400, "Login Details Not In String Format"]
         if(!req.body.email.trim() || !req.body.password.trim()) throw [400, "Login Details Might Be Empty"]
-        let email: string = xss(req.body.email.trim());
+        let email: string = xss(req.body.email.trim().toLowerCase());
         let password: string = xss(req.body.password.trim());
         // const hashPassword = await bcrypt.hash(password, bcryptRounds)
         // retrieve if there is data with the given email
         
         let userId = null;
-        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email).get();
+        const querySnapshot = await firestoreDb.collection("users").where("email", "==", email.toLowerCase()).get();
 
         if(querySnapshot.docs[0]){
 
@@ -73,14 +73,14 @@ router.post("/signup", async(req, res) => {
         let {user, password} = req.body;
         console.log(user)
         console.log(password)
-        if(typeof(user.name)!='string'||typeof(user.gender)!='string'||typeof(user.email)!='string'||
+        if(typeof(user.name)!='string'||typeof(user.gender)!='string'||typeof(user.email.toLowerCase())!='string'||
         typeof(user.address.postal_code) !='string' ||
         typeof(user.address.city)!='string'||
         typeof(user.address.state)!='string'||
         typeof(user.address.country)!='string' ||
         typeof(password)!='string') throw [400, "Registration Details Not In String Format"]
 
-        if(!user.name.trim() || !user.gender.trim() || !user.email.trim()  || 
+        if(!user.name.trim() || !user.gender.trim() || !user.email.trim().toLowerCase()  || 
         !user.address.city.trim() || !user.address.state.trim() || !user.address.postal_code ||
          !user.address.country.trim() ||
          !password.trim()) throw [400, "Registration Details Might Be Empty Strings"]
@@ -89,7 +89,7 @@ router.post("/signup", async(req, res) => {
          if(isNaN(Number(user.address.postal_code))) throw [400, "ZIP Is Not Number"]
          if( !isNaN(Number(user.name.trim())) || !isNaN(Number(user.address.city.trim())) || !isNaN(Number(user.address.state.trim())) ||
         !isNaN(Number( user.address.country.trim())) || !isNaN(Number(user.gender.trim())) ||
-         !isNaN(Number(user.email.trim()))
+         !isNaN(Number(user.email.trim().toLowerCase()))
          ) throw [400, "Any Detail Of The User Might Be A Number Which Require To Be A String"]
         let newUser: User = {
             "name": xss(user.name.trim()),
@@ -101,7 +101,7 @@ router.post("/signup", async(req, res) => {
             },
             "phone": xss(Number(user.phone)),
             "gender": xss(user.gender.trim()),
-            "email": xss(user.email.trim()),
+            "email": xss(user.email.trim().toLowerCase()),
             "dateOfBirth": xss(user.dateOfBirth),
             "hostEventArray": [],
             "attendEventArray": []
@@ -110,8 +110,10 @@ router.post("/signup", async(req, res) => {
         let newlyCreatedUser = await usersData.createUser(newUser);
         if(!newlyCreatedUser) throw [500, "User cannot be signed up."]
         const hashPassword = await bcrypt.hash(password.trim(), bcryptRounds)
+        const prequerySnapshot = await firestoreDb.collection("users").where("email", "==", user.email.trim().toLowerCase()).get();
+        if(prequerySnapshot.docs[0]) throw [400, "User already exists with that email."]
         const querySnapshot = await firestoreDb.collection("users").add({
-            email: user.email.trim(),
+            email: user.email.trim().toLowerCase(),
             password: hashPassword,
             userId: newlyCreatedUser._id
         });
@@ -132,14 +134,14 @@ router.post("/signup", async(req, res) => {
 router.put("/", async(req, res) => {
     try{
         if(!req.session.userId) throw [400, "User Not Logged In"]
-        if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email)!='string'||
+        if(typeof(req.body.name)!='string'||typeof(req.body.gender)!='string'||typeof(req.body.email.toLowerCase())!='string'||
         typeof(req.body.address.city)!='string'||
         typeof(req.body.address.postal_code) !='string' ||
         typeof(req.body.address.state)!='string'||
         typeof(req.body.address.country)!='string'||
         typeof(req.body.password)!='string') throw [400, "Updation Details Not In String Format"]
 
-        if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim()  || 
+        if(!req.body.name.trim() || !req.body.gender.trim() || !req.body.email.trim().toLowerCase()  || 
         !req.body.address.city.trim() || !req.body.address.state.trim() || !req.body.address.postal_code ||
          !req.body.address.country.trim() 
          || !req.body.trim()) throw [400, "Updation Details Might Be Empty Strings"]
@@ -149,7 +151,7 @@ router.put("/", async(req, res) => {
          if( !isNaN(Number(req.body.name.trim())) || !isNaN(Number(req.body.address.city.trim())) || !isNaN(Number(req.body.address.state.trim())) ||
             !isNaN(Number(req.body.address.country.trim())) || 
             !isNaN(Number(req.body.gender.trim())) ||
-            !isNaN(Number(req.body.email.trim()))
+            !isNaN(Number(req.body.email.trim().toLowerCase()))
          ) throw [400, "Any Detail Of The User Might Be A Number Which Require To Be A String"]
 
         let newUser: User = {
@@ -163,7 +165,7 @@ router.put("/", async(req, res) => {
             },
             "phone": xss(Number(req.body.phone)),
             "gender": xss(req.body.gender.trim()),
-            "email": xss(req.body.email.trim()),
+            "email": xss(req.body.email.trim().toLowerCase()),
             "dateOfBirth": xss(req.body.dateOfBirth.trim()),
             "hostEventArray": xss(req.body.hostEventArray),
             "attendEventArray": xss(req.body.attendEventArray)
@@ -173,6 +175,8 @@ router.put("/", async(req, res) => {
         console.log(updatedUser);
 
         req.session.userName = updatedUser.name;
+        const prequerySnapshotEmail = await firestoreDb.collection("users").where("userId", "!=", req.session.userId).where("email", "==", req.body.email.trim().toLowerCase()).get();
+        if(prequerySnapshotEmail) throw [400, "A user already exists with that email."]
 
         // changing email in firebase too
         const prequerySnapshot = await firestoreDb.collection("users").where("userId", "==", req.session.userId).get();
@@ -181,7 +185,7 @@ router.put("/", async(req, res) => {
         const firebaseId = prequerySnapshot.docs[0].id;
 
         const querySnapshot = await firestoreDb.collection("users").doc(firebaseId).update({
-            "email": req.body.email.trim(),
+            "email": req.body.email.trim().toLowerCase(),
         });
 
         res.status(200).json({ "success": true, "result": updatedUser });

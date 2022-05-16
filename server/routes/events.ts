@@ -1,5 +1,5 @@
 import express, { query } from 'express';
-
+import nodemail from "../nodemail";
 import multer, { FileFilterCallback } from "multer"
 import { Request, Response } from 'express';
 import { Event } from '../models/events.model';
@@ -14,6 +14,7 @@ import { user } from 'firebase-functions/v1/auth';
 import { BucketBuilder } from 'firebase-functions/v1/storage';
 const eventsData = data.eventsData;
 const usersData = data.usersData;
+const paymentsData = data.paymentsData;
 const config = process.env
 export default router;
 const xss = require('xss');
@@ -94,17 +95,21 @@ router.get('/event', async (req, res) => {
             let obj = req.query;
             obj.eventId = xss(obj.eventId?.toString().trim())
             obj.hostId = xss(obj.hostId?.toString().trim())
+            let getAttendees;
+            let getCohosts;
             //
             // if(!ObjectId.isValid(eventId)) throw [400, "Event ID Is Invalid"]
             if (obj.eventId) {
                 if (!ObjectId.isValid(obj.eventId.toString())) throw [400, "Event ID Is Invalid"]
+                    getAttendees = await eventsData.getAttendees(obj.eventId.toString())
+                    getCohosts = await eventsData.getCohosts(obj.eventId.toString())
             }
             if (obj.hostId) {
                 if (!ObjectId.isValid(obj.hostId.toString())) throw [400, "Host ID Is Invalid"]
             }
             console.log('test')
             let getById = await eventsData.getbyId(obj)
-            return res.status(200).json({ "success": true, "result": getById })
+            return res.status(200).json({ "success": true, "result": getById, "resultAttendees": getAttendees, "resultCohosts": getCohosts })
         }
         catch (e: ?) {
             console.log(e)
@@ -125,8 +130,27 @@ router.get('/free', async (req, res) => {
     }
 });
 
+router.post('/event/register/paymentsession/:eventid/:userid', async(req,res) => {
+    try{
+        if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
+        if (!ObjectId.isValid(req.params.userid.toString())) throw [400, "User ID Is Invalid"]
+
+        if (!req.params.eventid.trim() || !req.params.userid.trim()) throw [400, 'Event ID Or User ID Might Be Empty Strings']
+        let eventId = xss(req.params.eventid.trim())
+        let newUserid = xss(req.params.userid.trim());
+
+        let createPaymentSession = await paymentsData.createSession(eventId, newUserid);
+        if(createPaymentSession) return res.status(200).json({"result": createPaymentSession});
+    }catch(e){
+
+    }
+})
+
+
+
 router.post('/event/register/:eventid', async function (req, res) {
     try {
+
         if (!ObjectId.isValid(req.params.eventid.toString())) throw [400, "Event ID Is Invalid"]
 
         if (!req.params.eventid.trim()) throw [400, 'Event ID Might Be Empty String']
@@ -137,6 +161,9 @@ router.post('/event/register/:eventid', async function (req, res) {
             let newUserid = xss(req.session.userId);
             let addattendees = await eventsData.addAttendee(eventId, newUserid);
             let addEventInUserCollection = await usersData.addRegisteredEvent(newUserid, eventId);
+            let getEmail = await usersData.getUser(newUserid);
+            let getEventname = await eventsData.getEventForName(eventId);
+            nodemail(getEmail.email, "You have registered for an event", `hello ${getEmail.name}. You have registered for the event ${getEventname.name}`);
             res.status(200).json({ "success": true, "result": addattendees, "hostName": req.session.userName })
         }
         else {
@@ -183,16 +210,18 @@ router.post('/event/:eventid/addcohost/:userid', async function (req, res) {
 
         if (req.session.userId) {
             let userId = xss(req.session.userId.trim())
+            let reqEvent = await eventsData.getbyId({ eventId: eventId, hostId: userId });
 
             if (userId === newUserid) {
                 res.status(400).json({ "success": false, "result": "You're The Host Already" })
                 return;
             }
-            let reqEvent = await eventsData.getbyId({ eventId: eventId, hostId: userId });
 
-            if ((userId != newUserid) && reqEvent) {
+            if (userId != newUserid) {
                 let addCoHosts = await eventsData.addCohost(eventId, newUserid);
                 let addEventInUserCollection = await usersData.addHostedEvent(newUserid, eventId);
+                let unregister = await eventsData.unRegister(eventId, newUserid);
+                let removeEventInUserCollection = await usersData.deleteRegisteredEvent(newUserid, eventId);
                 res.status(200).json({ "success": true, "result": addCoHosts, "hostName": req.session.userName })
             }
             // res.status(400).json({"success": false, "result": "User is already a co host"})
@@ -250,6 +279,9 @@ router.post('/event/:eventid/removecohost/:userid', async function (req, res) {
             if (reqEvent) {
                 let remcohost = await eventsData.removeCohost(eventId, newUserid);
                 let delEventFromUserCollection = await usersData.deleteHostedEvent(newUserid, eventId);
+                let addattendees = await eventsData.addAttendee(eventId, newUserid);
+                let addEventInUserCollection = await usersData.addRegisteredEvent(newUserid, eventId);
+
                 res.status(200).json({ "success": true, "result": remcohost, "hostName": req.session.userName })
             }
         }
