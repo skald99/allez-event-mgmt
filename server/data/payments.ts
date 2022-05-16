@@ -2,7 +2,7 @@ import { Event } from "../models/events.model";
 import { User } from "../models/user.model";
 import Stripe from "stripe";
 import "dotenv/config";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import usersdata from "./users";
 import { collections, events, users } from "../config/mongoCollections";
 
@@ -286,17 +286,13 @@ async function searchCustomer(email: string) {
     } else if (email.trim().length === 0 || !emailRegex.test(email)) {
         throw [400, "Invalid Email"];
     }else {
-        try{
-            let {data} = await stripe.customers.search({query: `email:"${email}"`})
-            let idList: string[] = [];
-            if(data && data.length > 0) {
-                data.forEach(e => {
-                    idList.push(e.id);
-                })
-                return idList;
-            }
-        } catch(e) {
-            console.log(e);
+        let {data} = await stripe.customers.search({query: `email:${email}`})
+        let idList: string[] = [];
+        if(data && data.length > 0) {
+            data.forEach(e => {
+                idList.push(e.id);
+            })
+            return idList;
         }
     }
 }
@@ -335,35 +331,31 @@ async function createSession(eventId: string, custId: string) {
         throw [400, "You're A Cohost"]
     }
     else {
-        if (userData.attendEventArray.includes(eventId)) {
+        if (!userData.attendEventArray.includes(eventId)) {
             throw [400, "You Have Already Registered For The Event"]
         } else {
-            try{
-                const eventPriceID: string = await getEventPrice(eventId);
-                await users();
-                let user = await collections.users?.findOne({_id: new ObjectId(custId)});
-                if(user) {
-                    let custEmail = user.email;
-                    // let custId = await searchCustomer(custEmail);
-                    // if(custId && custId.length > 0) {}
-                    const session: Stripe.Response<Stripe.Checkout.Session> = await stripe.checkout.sessions.create({
-                        success_url: "http://localhost:3000/eventDashboard",
-                        cancel_url: "http://localhost:3000/error",
-                        line_items: [
-                            {price: eventPriceID, quantity: 1}
-                        ],
-                        customer_creation: "always",
-                        payment_method_types: ["card"],
-                        mode: "payment"
-                    })
-                    return session.url;
-                }
-    
-            } catch(e) {
-                console.log(e);
+            const eventPriceID: string = await getEventPrice(eventId);
+            await users();
+            let user = await collections.users?.findOne({_id: new ObjectId(custId)});
+            if(user) {
+                let custEmail = user.email;
+                let custId = await searchCustomer(custEmail);
+                if(custId && custId.length > 0) {}
+                const session: Stripe.Response<Stripe.Checkout.Session> = await stripe.checkout.sessions.create({
+                    success_url: "http://localhost:3000/events/eventDashboard",
+                    cancel_url: "http://localhost:3000/error",
+                    line_items: [
+                        {price: eventPriceID}
+                    ],
+                    customer_creation: "always",
+                    payment_method_types: ["card"],
+                    mode: "payment"
+                })
+                console.log(session);
+                return session.url;
             }
 
-            }
+        }
     }
 }
 
