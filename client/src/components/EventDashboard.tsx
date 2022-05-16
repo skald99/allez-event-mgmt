@@ -40,7 +40,6 @@ const EventList = () => {
                 setLoading(false)
             })
         }
-        console.log('inside use effect')
         fetchEventList()
     }, [])
 
@@ -51,7 +50,6 @@ const EventList = () => {
 
     useEffect(() => {
         let options = getStateOptions(displayEvents)
-        console.log(displayEvents)
         setStateOptions(options)
     }, [events])
 
@@ -183,7 +181,6 @@ const EventList = () => {
     const buildCard = (event: eventModel) => {
 
         let imgSrc = (event.eventImgs.length > 0) ? event.eventImgs.at(0) : noImage
-        console.log(imgSrc)
         return (
             <div className="max-w-sm rounded overflow-hidden shadow-lg">
                 <Link to={`/events/${event._id}`}>
