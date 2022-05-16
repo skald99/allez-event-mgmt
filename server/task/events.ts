@@ -58,6 +58,7 @@ function newEvent() {
         }
     }
     const eventTimeStamp: Date = faker.date.soon(15);
+    console.log(eventTimeStamp)
     return {name, category, price, description, totalSeats, bookedSeats, minAge, active, venue, eventTimeStamp, eventImgs};
 }
 

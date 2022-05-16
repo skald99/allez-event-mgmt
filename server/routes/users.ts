@@ -12,12 +12,12 @@ const bcryptRounds: number = 10; // used for encrypting the password using bcryp
 router.get("/logout", async(req, res) => {
     try{
         let statuscode: number = 200;
-        req.session.destroy((err) => {
-            if(req.session) throw 400;
+        req.session.destroy((err) =>{
+            if(err) throw "Signout failed"
         })
+        return res.status(200).json({"success": true, "result": "user has successfully logged out"})
     }catch(e){
-        if(e == 400) {res.status(400).json({"success": false, "result": e}); return;}
-        else { res.status(200).json({"success": true, "result": "user has successfully logged out"}); return;}
+        return res.status(400).json({"success": false, "result": e})
     }
 })
 
