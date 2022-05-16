@@ -239,6 +239,18 @@ async function addAttendee(eventId: string | ObjectId, userId: string) {
     }
 }
 
+async function getEventForName(eventId: string) {
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+
+        let neweventId = new ObjectId(eventId.toString().trim())
+
+        let requestedEvent = await collections.events?.findOne({ _id: neweventId });
+        if(!requestedEvent) throw [404, "could not find the requested event"];
+
+        requestedEvent!._id = requestedEvent!._id.toString();
+
+        return requestedEvent;
+}
 
 async function unRegister(eventId: string | ObjectId, userId: string) {
     if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
@@ -337,17 +349,41 @@ async function getAttendees(eventId: string) {
     if (requestedEvent?.attendeesArr) {
         let finalDetails = []
         for (let i = 0; i < requestedEvent?.attendeesArr?.length; i++) {
-            let detailObj = { "name": '', "email": '', "phone": 0 }
+            let detailObj = { "name": '', "email": '', "id": '' }
             let details = await usersdata.getUser(requestedEvent?.attendeesArr[i])
             detailObj["name"] = details.name
             detailObj["email"] = details.email
-            detailObj["phone"] = details.phone
+            detailObj["id"] = details._id.toString()
             finalDetails.push(detailObj)
         }
         return finalDetails
     }
     else{
         return 'No Attendees'
+    }
+}
+
+async function getCohosts(eventId: string) {
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    await events();
+    let neweventId = new ObjectId(eventId.toString().trim())
+    let requestedEvent = await collections.events?.findOne({ _id: neweventId });
+    if (requestedEvent === null) throw [404, 'Event Not Found']
+    let arr = requestedEvent?.cohostArr
+    if (requestedEvent?.cohostArr) {
+        let finalDetails = []
+        for (let i = 0; i < requestedEvent?.cohostArr?.length; i++) {
+            let detailObj = { "name": '', "email": '', "id": '' }
+            let details = await usersdata.getUser(requestedEvent?.cohostArr[i])
+            detailObj["name"] = details.name
+            detailObj["email"] = details.email
+            detailObj["id"] = details._id.toString()
+            finalDetails.push(detailObj)
+        }
+        return finalDetails
+    }
+    else{
+        return 'No Cohosts'
     }
 }
 
@@ -388,5 +424,7 @@ export default {
     addCohost,
     getbyId,
     removeCohost,
-    getAttendees
+    getAttendees,
+    getCohosts,
+    getEventForName
 }
