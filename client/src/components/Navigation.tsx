@@ -8,7 +8,7 @@ const Navigation = () => {
     let user = window.sessionStorage.getItem("userId")
     const navigation = useNavigate()
     const signout = async () => {
-        await axios("http://localhost:4000/users/logout").then(({ data }) => {
+        await axios("http://localhost:4000/users/logout",{withCredentials:true}).then(({ data }) => {
             window.sessionStorage.removeItem("userId")
             toast.success(data.result)
             navigation("/users")
