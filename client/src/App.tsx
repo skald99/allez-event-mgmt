@@ -9,6 +9,7 @@ import EventDetails from './components/EventDetails';
 import RegisteredEvents from './components/RegisteredEvents';
 import Auth from "./components/Auth";
 import Error from './components/PageNotFound'
+import UserProfile from './components/UserProfile'
 function App() {
   return (
     <div className="App">
@@ -19,9 +20,8 @@ function App() {
         <div >
           <Routes>
             <Route path='/' element={<Home />} />
-            <Route path='users' element={<Auth/>}>
-              {/* <Route path=':userId' element={<UserProfile/>}></Route> */}
-            </Route>
+            <Route path='/users' element={<Auth/>}/>
+            <Route path='/users/:userId' element={<UserProfile/>}/>
             <Route path='events'>
               <Route path='create' element={<NewEvent type={EventType.NEW}/>}/>
               <Route path=':eventId' element={<EventDetails/>}/>
