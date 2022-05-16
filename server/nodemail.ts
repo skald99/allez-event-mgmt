@@ -4,7 +4,7 @@ import 'dotenv/config';
 const {nodemailerUser, nodemailerPassword} = process.env;
 
 // async..await is not allowed in global scope, must use a wrapper
-async function main(toAddress: string, subject: string, text: string, HTML: string) {
+async function main(toAddress: string, subject: string, text: string) {
 
   // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
@@ -21,7 +21,6 @@ async function main(toAddress: string, subject: string, text: string, HTML: stri
     to: toAddress, // list of receivers
     subject: subject, // Subject line
     text: text, // plain text body
-    html: HTML, // html body
   });
 
   console.log("Message sent: %s", info.messageId);

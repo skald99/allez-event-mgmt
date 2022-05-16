@@ -11,8 +11,6 @@ const config = process.env
 
 async function createEvent(eventDetails: Event) {
 
-
-
     if(typeof(eventDetails.name)!='string' || typeof(eventDetails.venue.address)!='string' || typeof(eventDetails.venue.city)!='string'||
     typeof(eventDetails.venue.state)!='string' || typeof(eventDetails.venue.zip)!='string' || typeof(eventDetails.venue.city)!='string'
     ) throw [400, "Event Details Mgiht Not Be String Where Expected"]
@@ -209,10 +207,15 @@ async function addCohost(eventId: string | ObjectId, userId: string) {
 async function addAttendee(eventId: string | ObjectId, userId: string) {
     if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
     if(!ObjectId.isValid(userId.toString())) throw [400, "User ID Is Invalid"]
+    let userData = await usersdata.getUser(userId.toString().trim())
+    let dob = userData.dateOfBirth
+    let ageInYears = new Date().getFullYear() - new Date(dob).getFullYear();
     eventId = new ObjectId(eventId.toString().trim())
     await events();
     let requestedEvent = await collections.events?.findOne({ _id: eventId })
+    
     if (!requestedEvent) throw [400, "Event Not Found"]
+    if(ageInYears<requestedEvent?.minAge) throw [400, "You Do Not Meet The Minimum Age Requirements To Attend This Event."]
     if (requestedEvent?.totalSeats === requestedEvent?.bookedSeats) {
         throw [400, 'Event Is Full Already']
     }
@@ -234,6 +237,19 @@ async function addAttendee(eventId: string | ObjectId, userId: string) {
             return "Attendee added successfully"
         }
     }
+}
+
+async function getEventForName(eventId: string) {
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+
+        let neweventId = new ObjectId(eventId.toString().trim())
+
+        let requestedEvent = await collections.events?.findOne({ _id: neweventId });
+        if(!requestedEvent) throw [404, "could not find the requested event"];
+
+        requestedEvent!._id = requestedEvent!._id.toString();
+
+        return requestedEvent;
 }
 
 async function unRegister(eventId: string | ObjectId, userId: string) {
@@ -333,17 +349,41 @@ async function getAttendees(eventId: string) {
     if (requestedEvent?.attendeesArr) {
         let finalDetails = []
         for (let i = 0; i < requestedEvent?.attendeesArr?.length; i++) {
-            let detailObj = { "name": '', "email": '', "phone": 0 }
+            let detailObj = { "name": '', "email": '', "id": '' }
             let details = await usersdata.getUser(requestedEvent?.attendeesArr[i])
             detailObj["name"] = details.name
             detailObj["email"] = details.email
-            detailObj["phone"] = details.phone
+            detailObj["id"] = details._id.toString()
             finalDetails.push(detailObj)
         }
         return finalDetails
     }
     else{
         return 'No Attendees'
+    }
+}
+
+async function getCohosts(eventId: string) {
+    if(!ObjectId.isValid(eventId.toString())) throw [400, "Event ID Is Invalid"]
+    await events();
+    let neweventId = new ObjectId(eventId.toString().trim())
+    let requestedEvent = await collections.events?.findOne({ _id: neweventId });
+    if (requestedEvent === null) throw [404, 'Event Not Found']
+    let arr = requestedEvent?.cohostArr
+    if (requestedEvent?.cohostArr) {
+        let finalDetails = []
+        for (let i = 0; i < requestedEvent?.cohostArr?.length; i++) {
+            let detailObj = { "name": '', "email": '', "id": '' }
+            let details = await usersdata.getUser(requestedEvent?.cohostArr[i])
+            detailObj["name"] = details.name
+            detailObj["email"] = details.email
+            detailObj["id"] = details._id.toString()
+            finalDetails.push(detailObj)
+        }
+        return finalDetails
+    }
+    else{
+        return 'No Cohosts'
     }
 }
 
@@ -384,5 +424,7 @@ export default {
     addCohost,
     getbyId,
     removeCohost,
-    getAttendees
+    getAttendees,
+    getCohosts,
+    getEventForName
 }

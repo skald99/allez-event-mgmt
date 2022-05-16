@@ -4,7 +4,7 @@ import { useForm, SubmitHandler, SubmitErrorHandler, Controller } from "react-ho
 import { ErrorMessage } from "@hookform/error-message"
 import Select, { MultiValue } from "react-select";
 import DatePicker from "react-datepicker";
-import { addDays, format } from "date-fns";
+import { addDays, parseJSON, format } from "date-fns";
 import {useJsApiLoader} from "@react-google-maps/api";
 import { Combobox } from "react-widgets/cjs";
 import usePlacesAutocomplete, { getGeocode, getLatLng, getZipCode } from "use-places-autocomplete";
@@ -58,27 +58,14 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
             catg.push(eCat);
         })
     }
-    const {register, handleSubmit, reset, formState: {errors}, control} = useForm<newEventData>({
-        defaultValues: {
-            "name": eventData?.name,
-            "description": eventData?.description,
-            "minAge": eventData?.minAge,
-            "totalSeats": eventData?.totalSeats,
-            "price": eventData?.price,
-            "eventTimeStamp": format(new Date(eventData?.eventTimeStamp!), "MMM DD YYYY")
-        }
-    });
-
-        React.useEffect(() => {
-            async function getEventDetails(eventId: string) {
-                if(type === 1 && eventId) {
-                    let retrievedEvent: AxiosResponse = await axios.get(`http://localhost:4000/events/event?eventId=${eventId}`, {withCredentials: true})
-                    console.log(retrievedEvent);
-                    if(retrievedEvent) {
-                        let {data, status, statusText} = retrievedEvent;
-                        console.log(data);
-                        console.log(status);
-                        console.log(statusText);
+    
+    React.useEffect(() => {
+        async function getEventDetails(eventId: string) {
+            if(type === 1 && eventId) {
+                let retrievedEvent: AxiosResponse = await axios.get(`http://localhost:4000/events/event?eventId=${eventId}`, {withCredentials: true})
+                console.log(retrievedEvent);
+                if(retrievedEvent) {
+                    let {data} = retrievedEvent;
                         setEventData(data.result);
                         let {address, city, state} = data.result.venue;
                         setVenue(`${address}, ${city}, ${state}`);
@@ -86,23 +73,34 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                 // }
                 
                 }
-            
+                
             }
             if(eventId !== undefined) {
                 getEventDetails(eventId!);
                 
             }
         }, [eventId, type])
-    
+        
         React.useEffect(() => {
             reset(eventData)
         },[eventData])
-    const onErrors: SubmitErrorHandler<newEventData> = data => console.log(data);
-    const [venue, setVenue] = React.useState<string>("");
-    const [selectedDate, setSelectedDate] = React.useState<Date>();
-    const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
-    const [eventImages, setEventImages] = React.useState<File[]>([]);
-    
+        
+        const onErrors: SubmitErrorHandler<newEventData> = data => console.log(data);
+        const [venue, setVenue] = React.useState<string>("");
+        const [selectedDate, setSelectedDate] = React.useState<Date>();
+        const [showImageModal, setShowImageModal] = React.useState<boolean>(false);
+        const [eventImages, setEventImages] = React.useState<File[]>([]);
+        const {register, handleSubmit, reset, formState: {errors}, control} = useForm<newEventData>({
+            defaultValues: {
+                "name": eventData?.name,
+                "description": eventData?.description,
+                "minAge": eventData?.minAge,
+                "totalSeats": eventData?.totalSeats,
+                "price": eventData?.price
+                // "eventTimeStamp": format(new Date(eventData?.eventTimeStamp!), "MMM DD YYYY")
+            }
+        });
+        
     const onSubmit: SubmitHandler<newEventData> = async data => {
         let { zipCode, venueCoord } = await getGCAndZip(venue);
         let eventVenue: string[] = venue.split(",");
@@ -400,7 +398,6 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                                     return selected;
                                                 }}
                                                 selected={selectedDate}
-                                                value={value}
                                                 dateFormat="MM/dd/yyyy"
                                                 minDate={addDays(new Date(), 1)}
                                                 fixedHeight
@@ -408,6 +405,8 @@ const NewEvent: React.FC<EventProps> = ({type}) => {
                                                 
                                             />
                                             )}
+
+                                            //format(parseISO(value), 'MMM dd YYYY')
                                             rules = {{
                                                 required: "Please enter a valid date."
                                             }
