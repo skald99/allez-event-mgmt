@@ -11,7 +11,7 @@ const RegisteredEvents = () => {
     useEffect(() => {
         async function getRegisteredEvents() {
 
-            await axios.get(`http://localhost:4000/users/RegisteredEvents`).then(({ data }) => {
+            await axios.get(`http://localhost:4000/users/RegisteredEvents`, {withCredentials: true}).then(({ data }) => {
                 let events = data.result
                 console.log(events)
                 let upcomingFilter = events.filter((event: { eventTimeStamp: string | number | Date; }) => (new Date(event.eventTimeStamp).getTime() > new Date().getTime()))
@@ -121,9 +121,6 @@ const RegisteredEvents = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 {event.price}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <Link to={`/events/${event._id}`} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Open</Link>
                                             </td>
                                         </tr>
                                     )

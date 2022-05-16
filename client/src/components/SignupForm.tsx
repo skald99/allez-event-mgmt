@@ -67,6 +67,9 @@ const SignupForm = (props: {className: string, userStatus: (status: number) => v
     return(
         <div className={`w-full ${props.className}`}>
             <form onSubmit={handleSubmit(onSubmit, onErrors)} className="px-8 pt-6 pb-8 mx-6 mb-4 bg-white rounded shadow-md">
+            <h1 className="flex justify-center mt-12 mb-10 font-sans text-4xl font-bold text-gray-700">
+                    Sign up
+                </h1>
                 <div className="grid grid-cols-1 mx-3 divide-y-2">
                     <div>
                         <div className="mb-6">
