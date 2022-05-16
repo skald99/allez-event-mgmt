@@ -41,6 +41,16 @@ app.post(regex, (req, res, next) => {
     shouldAuthenticate = false;
     next();
 });
+
+app.post('/webhook', (request, response) => {
+    const payload = request.body;
+  
+    console.log("Got payload: " + payload);
+  
+    response.status(200);
+  });
+
+  
 app.use('*', (req, res, next) => {
     if(shouldAuthenticate && !req.session.userId)
         return res.status(401).json({ "success": false, "result": 'user must be logged in.'});
