@@ -28,13 +28,17 @@ const Navigation = () => {
                         <div className="flex">
                             <Link to={"/eventDashboard"} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">Dashboard</Link>
                             <Link to={"/RegisteredEvents"} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">Registered Events</Link>
-
                         </div>
                         <div className="flex">
                             <Link to={"/events/create"} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">New Event</Link>
                         </div>
                         <div className="flex">
-                            {(user) ? <button onClick={signout} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-out delay-300 bg-blue-700 rounded-md hover:bg-blue-300 hover:text-slate-800">Sign Out</button> : <Link to={"/users"} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-out delay-300 bg-blue-700 rounded-md hover:bg-blue-300 hover:text-slate-800">Login/Signup</Link>
+                            {(user) ?
+                                <div>
+                                    <Link to={`/users/${user}`} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-in-out delay-300 rounded-md bg-slate-500 hover:bg-slate-300 hover:text-slate-800">My Profile</Link>
+                                    <button onClick={signout} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-out delay-300 bg-blue-700 rounded-md hover:bg-blue-300 hover:text-slate-800">Sign Out</button>
+                                </div>
+                                : <div><Link to={"/users"} className="px-6 py-2 mx-5 my-2 font-sans text-white transition ease-out delay-300 bg-blue-700 rounded-md hover:bg-blue-300 hover:text-slate-800">Login/Signup</Link></div>
                             }
                         </div>
                     </div>
